@@ -1,0 +1,163 @@
+### Assertion
+断言
+```
+const assert = require('assert');
+assert(条件, 一段话)
+function sum(a, b) {
+  assert(arguments.length === 2,  '必须有两个参数');
+  assert(typeof a === 'number',  ‘第一个参数必须是数字’);
+}
+```
+如果条件不满足，会停止程序，并且打印出提示的话。
+
+### Buffer
+帮助js处理二进制，一般和文件系统一起使用
+
+### File System 文件系统
+```
+const fs = require('fs');
+// 异步获取文件
+fs.readFile('2.txt', (err, data) => {
+  if(err) {
+    console.log(err);
+  } else {
+    console.log(data); // 二进制文件流
+    data.toString(); 将二进制转为文字，只有文本文件可以，图片之类的用之后也看不懂
+  }
+})
+fs.writeFile('3.text', '内容', (err) => {
+  if (err) {
+    console.log('失败');
+  } else {
+    console.log('成功')
+  }
+})
+
+fs.readFile('1.txt', (err, data) => {
+  fs.writeFile('2.txt', data, (err) => {
+    
+  })
+})
+```
+### C++ Addons
+使用c语言写的插件，在node中使用。
+
+### 多线程
+Child_Processes
+Cluster
+Process
+
+### Command Line Options
+参数
+
+### Crypto
+签名，完成加密算法的
+
+### OS
+系统
+```
+const os = require('os');
+os.cpus();
+```
+
+### Path
+路径
+dirname: 目录;   aaa/aa/
+basename: 文件名;   aaaa.txt
+extname: 扩展名    .txt
+```
+const path = require('path');
+path.parse()
+```
+
+### crypto   MD5
+```
+const cryptp = require(''crypto");
+let obj = cryto.createHash('md5');
+obj.update('123');
+console.log(obj.digest('hex')); // MD5 32位
+```
+### 进程和线程
+一个程序就是一个进程，一个进程会有多个线程
+进程和进程是严格隔离的，拥有独立的执行空间。
+同一个进程内的所有线程共享一套空间、代码
+- 多进程
+成本高，速度慢，安全，进程间通信麻烦，写代码简单。
+- 多线程
+成本低，速度快，不安全，线程间通信简单，写代码复杂。
+
+### Events 时间队列
+```
+const Event = require('events').EventEmitter;
+let ev = new Event();
+// 监听
+ev.on('msg', function(a, b,c) {
+    console.log(a, b, c); // 12 ， 3， 8
+})
+// 派发
+ev.emit('msg', 12,3,8);
+```
+### query-string
+解析参数
+```
+const qs = require('query-string');
+qs.parse('')
+```
+
+### url 模块
+```
+const url = require('url');
+url.parse('url', true); // 会解析出url和参数，包含query-string的功能。
+```
+
+### 网络Net
+- TCP 稳定  Net
+- UDP 快 UDP/Datagram
+
+### DNS/Domain
+DNS: 域名解析成ip
+
+```
+const dns = require('dns');
+dns.resolve('baidu.com', (err, res) => {
+})
+```
+
+### 流操作 Stream
+
+### TLS/SSL
+加密、安全
+
+### TTY
+加密，安全
+
+### ZLIB
+压缩
+
+### http服务器
+```
+const http = require('http');
+const fs = require('fs');
+let server = http.createServer((req, res) => {
+
+ // 第一种
+  switch(req.url) {
+    case './aaa':
+      res.write('abc');
+      break;
+    case './bbb':
+      res.write('dddd');
+      break;
+    case './1.html':
+      res.write('<html><head></head><body>212</body></html>');
+      break;
+  }
+  res.end();
+// 第二种
+fs.readFile(`www${req.url}`, (err, data) => {
+    res.write(data);
+    res.end();
+  })
+});
+server.listen(8080);
+```

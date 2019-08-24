@@ -1,0 +1,57 @@
+### CSS3
+1、圆角: border-radius
+2、阴影 text-shadow，box-shadow
+3、渐变 linear，radial
+4、rgba
+5、transform
+6、动画 transition，animation
+
+### 阴影
+- 文本
+text-shadow: 横向偏移 纵向偏移 大小 颜色
+- 盒子
+box-shadow: [insert] 横向偏移 纵向偏移 大小 [阴影区] 颜色
+
+### 渐变，一般只能加在背景上
+- 线性渐变
+background-image: linear-gradient(left top, green);
+- 径向渐变
+background-image: radial-gradient(left top, green);
+
+### transform
+1、rotate 旋转
+2、scale 缩放
+3、translate 平移
+4、skew 倾斜
+注意: 使用transform之前一定要有初始值，不然可能会出错。
+css3不会改变盒模型。
+
+### 动画
+- transition
+简单，容易，方便
+
+- animation
+强大，麻烦
+animation-name: 动画名称
+animation-duration: 时长
+animation-timing-function: ease 运动方式
+animation-fill-mode: forwards; 结束填充模式，恢复还是保留
+animation-iteration-count: 循环次数
+animation-direction: alternate 循环方向
+animation-play-state: paused 暂停
+
+### transform应用
+1、可以多个变换一起用，顺序是”反“的，后写的先执行
+2、3D变换
+transform: perspective、preserve-3d
+transform-style: preserve-3d;
+- perspective - 自己，只给最外层加一次即可
+- preserve-3d - 子元素，子元素可以脱离父级，每个需要子级出来的地方都得加。
+transform-origin: left; 旋转中心
+
+
+
+
+
+
+

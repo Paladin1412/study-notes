@@ -1,0 +1,119 @@
+### 浏览器渲染慢
+- 页面东西多
+- 有图片也会拖慢页面速度
+- DOM操作
+
+### 缓存策略
+- url变了，不缓存
+- 标准-每次都要请求服务器
+- 服务器配置问题
+
+### 数据库操作
+通过使用mysql模块，操作数据库。
+
+```
+const mysql = require('mysql');
+// 链接数据库
+const db = mysql.createConnection({
+    host: '127.0.0.1',
+    user: 'root',
+    password: 'root',
+    port: 3306,
+    database: 'dip_data'
+});
+// 查询数据
+db.query('select * from dip_mode', (err, data) => {
+    if (err) {
+        console.log('出错了');
+    } else {
+        console.log(data);
+    }
+});
+```
+
+### SQL
+结构化查询语句
+- 增加  INSERT
+INSERT INTO 表 (字段列表) VALUES(值列表);
+自增行可以设置 null 或者 0;
+
+- 删除  DELETE
+DELETE FROM 表 WHERE id=2;
+- 修改  UPDATE
+UPDATE 表 SET 字段=值, 字段=值 WHERE ...
+- 查询  SELECT
+SELECT 字段, 字段  FROM 表;
+
+### SQL注入
+
+防止sql注入，添加判断，别有引号之类的特殊字符，或者转译特殊字符;
+
+### 数据库连接池
+createPool，默认创建10个链接。可以通过maxConnection: 15 修改成15个
+mysql.createPool({
+    host: '127.0.0.1',
+    user: 'root',
+    password: 'root',
+    port: 3306,
+    database: 'dip_data',
+    maxConnection: 15,
+});
+一般情况，10个已经够用了。
+
+### 注意
+数据库结构-数据字典;
+接口参数-接口文档;
+占位符防止SQL注入。
+
+### RESTFUL
+
+
+### WebSocket
+1. 双向通信
+2. 自动跨域
+3. 性能高
+
+npm install socket.io;
+
+socket不是独立使用的，依赖于http。
+
+工作原理
+浏览器首先请求http服务，交换一个key，因为websocket默认就是加密的，拿到key之后http服务器将链接过继给ws服务器，后面就是浏览器和ws服务器通信。
+
+```
+const http = require('http');
+const io = require('socket.io');
+
+// 创建http服务，开启8080端口号
+const httpServer = http.createServer().listen(8080);
+// socket监听http服务
+const wsServer = io.listen(httpServer);
+
+// 当有链接的时候
+wsServer.on('connection', sock => {
+    // 发送
+    // sock.emit
+    sock.emit('time', Date.now());
+    // 接收
+    sock.on('aaa', (a, b, c) => {
+        console.loh(a, b, c);
+    })
+})
+
+```
+sock下面只有两个东西
+- emit 消息广播
+- on 接收消息
+
+浏览器-前端页面
+- 引入socket.io.js 文件，安装socket.io模块时，会自动提供，http://127.0.0.1:8080/socket.io/socket.io.js
+```
+const sock = io.connect('ws://127.0.0.1:8080/');
+sock.emit('aaa', 12, 5,8);
+sock.on('time', (ts) => {
+    console.loh(ts);
+})
+
+```
+
+### 区块链

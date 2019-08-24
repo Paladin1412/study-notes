@@ -1,0 +1,112 @@
+### 程序员的内功
+- 算法   0 - 2
+- 设计模式 3 - 5
+- 架构 5 - 10
+
+### 进程间怎么通信
+- 管道，
+- 共享内存，
+- socket，
+
+### 搭建web服务器
+```
+const http = require('http');
+const fs = require('fs');
+const url = require('url');
+const server = http.createServer((req, res) => {
+  const obj = url.parse(req.url, true);
+  fs.readFile(`www${req.url}`, (err, data) => {
+    if (err) {
+      res.writeHeader(404);
+      res.write('404');
+    } else {
+       res.write(data);
+    }
+    res.end();
+  })
+})
+server.listen(8080);
+```
+write返回的就是响应体，需要手动设置请求头。writeHeader设置状态码
+setHeader设置响应头
+- web服务器需要返回文件
+- 数据交互 GET, POST
+- 数据库
+
+### POST请求
+```
+const http = require('http');
+const fs = require('fs');
+const querystring = require('querystring');
+const server = http.createServer((req, res) => {
+  // 有一个段到达了
+  const arr = [];
+  req.on('data', data => {
+    arr.push(data);
+  })
+  // 结束了
+  req.on('end', data => {
+    const str = Buffer.concat(arr);
+    const post = querystring.parse(str);
+    res.end();
+  })
+})
+server.listen(8080);
+```
+使用字符串接收流文件时会有问题。
+
+1、GET数据
+- 在req.url 里
+
+2、POST数据
+- 在body里面，数据比较大，使用data 和 end 事件处理
+
+一切来自前台的数据都是不可信的。
+### 数据库
+- 文件型数据库 - sqlite
+- 关系型数据库 - mysql oracle
+- 文档型数据库 Mongodb
+
+| 名称 | 特点| 备注|
+| -- |:--: | -- |
+|关系型| 最常见的数据库, 数据之间是有关系的| Mysql，Oracle |
+|文件型数据库|简单, 不擅长处理大规模数据 | sqlite |
+| 文档型数据库 | 直接存储异构数据, 很方便，效率高 | mongodb |
+
+大型系统，主数据库一定是关系型数据库
+mysql: 免费，绝大多数普通应用，容灾略差
+oracle: 收费，金融，医疗，容灾特别强
+
+SQL 和 NoSQL
+
+| 名称 | 特点| 备注|
+| -- |:--: | -- |
+|SQL|  | Mysql，Oracle |
+|NoSQL|没有呀复杂的关系，对性能有极高的要求， | redis, memcached, hypertable, bigtable |
+|数据仓库|海量数据|强调集群|
+
+###缓存
+cache-control: 
+expires: 
+date: 缓存日期
+向服务器询问是否走缓存，服务器确定是304还是200
+
+### 垃圾回收机制
+可以学学C语言，需要手动释放内存
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

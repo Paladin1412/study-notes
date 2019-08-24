@@ -1,0 +1,125 @@
+### Blob
+二进制大对象，是数据本身
+### file
+文件索引，存储文件类型，大小之类的信息，并不是文件。可以通过File对象读出文件本身
+
+#HTML5
+1、geolocation 定位
+2、video, audio
+3、localStorage
+cookie: 4k，浏览器和服务器共享
+localStorage 5M，浏览器独享
+4、WebWorker 多进程
+5、WebSQL、IndexDB 前台数据库，有安全隐患，基本不用。已经被W3C删除了。
+6、文件操作，拖拽
+7、canvas 绘制图形，位图
+svg/vml 矢量图
+8、manifest文件 前台控制缓存，本地应用。
+9、CSS3
+
+### GeoLocation 定位
+1、原理
+PC端: IP地址定位，定位不准，精度非常差，典型的QQ
+移动端:  GPS定位，精度很高，几米的范围内
+2、PC端通过IP库，Chrome -> goole.com --> 因为限制，所以chorme测试不了
+同一个域名只要一个页面被允许之后，都可以获取，只要有一个被禁止，都会被禁止
+3、geolocation 在 navigator对象上
+4、需要在服务器环境运行
+```
+const geolocation = window.navaigator.geolocation;
+geolocation.getCurrentPosition((res) => {
+   console.log(res.coords)
+}, (err) => {
+})
+```
+百度地图api 1.2版本，不需要密钥，完全开放，建议测试使用。
+getCurrentPosition(成功，失败，参数)：获取一次位置
+watchPosition：设置监听持续的获取位置
+clearWatch：清除监听
+
+
+### localStorage
+需要在服务器环境
+1. 每个域名5M
+2. 极其方便
+3. 永久存储
+4. 用途, 记录用户名，保存草稿
+```
+localStorage.a = 123; 存
+const a = localStorage.a; 取
+// 遍历Storage
+for(let i = 0; i < localStorage.length; i++) {
+  const key = localStorage.key(i);
+  const value = localStorage[key];
+}
+delete localStorage.a; 删除localStorage
+```
+
+### sessionStorage
+1. 每个域名5M
+2. 临时存储，会话期间存储
+
+### webworker 多进程
+前端没有大规模运算，所以基本不用。
+前台运行性能不是瓶颈，网络性能才是瓶颈
+特点:
+1. 不能控制UI的东西，只能做数据交互
+2. 子进程不能再创建子进程
+3. 跨域，只能是自己域下面的js
+4. 需要在服务器运行
+```
+const worker = new Worker('abc.js');
+worker.pushMessage({a: 1, b: 2});
+worker.onmessage = function(ev) {
+  console.log(ev.data);
+}
+```
+abc.js
+```
+this.onmessage = function(ev) {
+  console.log(ev.data);
+}
+this.postMessage({c: 1, d: 2});
+```
+多线程: 共享存储空间，多个进程之间传引用
+多进程: 各自独享存储空间-复制一份给子线程
+
+### WebSQL, IndexDB
+已经被w3c除名
+
+### canvas
+canvas: 位图
+SVG: 矢量图，不是HTML5的东西，是一个独立的标准，早在十几年前就存在。
+VML: IE的矢量图，出现的非常早，在IE5的年代就存在了
+
+注意: canvas的宽高必须是写在属性里面的，不能写在样式表中。
+canvas必须要依赖js
+```
+const oc = document.getElementById('canvas');
+const gd = oc.getContext('2d'); // 2d 或者 webgl
+gd.moveTo(470, 81);
+gd.lineTo(778, 236);
+gd.lineTo(532, 411);
+gd.lineTo(312, 259);
+gd.lineTo(470, 81);
+gd.closePath(); // 闭合影要用这个函数
+// gd.stroke(); // 设置边框
+// gd.fill(); // 设置填充
+gd.lineWith = 10; // 设置线的宽度
+// gd.strokeStyle = 'red'; // 线的颜色
+// gd.fillStyle = 'yellow'; 填充颜色
+```
+1、图表，可视化
+2、游戏
+3、滤镜
+
+
+
+
+
+
+
+
+
+
+

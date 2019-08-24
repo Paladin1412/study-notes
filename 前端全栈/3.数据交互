@@ -1,0 +1,80 @@
+如何删除已签名的cookie: 连签名和cookie一起删除。
+如何重复登录把上一次登录的用户给挤掉：记录下本次登录的ip，把上一次的session关闭。
+单点登录: oAuth授权登录
+
+### AJAX的POST请求
+需要将参数放在请求体，send(a=1&b=2)
+需要设置请求头: Content-type: application/x-www-form-urlencoded
+setRequestHeader("Content-type", "application/x-www-form-urlencoded"); 该方法要放在open后send前。
+enctype: multipart/form-data   上传文件需要设置
+eval 解析json需要加个括号 eval('({"a": "3"})')
+
+### restful
+不是接口也不是标准，是一种风格，一个接口，通过不同额请求方式，实现不同的目的。
+- GET 登录
+- POST 注册
+- DELETE 注销用户
+- PUT
+
+### Content-type常用类型
+- text/plain  纯文本
+- application/x-www-form-urlencoded 使用&的方式提交数据，post使用
+- mutipart/form-data 定界符分割的各个数据(文件上传)
+
+### jsonp
+- 跨域
+- 安全性问题，过于开放，一旦开放就全都开放
+
+### url编码
+- encodeURIComponent("中文")：转译中文
+- decodeURIComponent("转移后的值")：还原中文
+
+### CORS
+
+### 与其他的后台语言相比
+nodejs和js都是单线程，单进程。
+非阻塞异步交互
+作为中间层的用途
+- 安全性，性能（缓存），与前台交互（数据方便）
+优点
+1. node和js语法一模一样，利于前端人员用
+2. 性能还可以（php，java，python），比php快了80倍左右
+3. 前后台配合方便
+
+缺点
+1. java有丰富的框架支持，
+
+NodeJS服务器
+1. 服务器搭建一个小型后台系统，做中间层
+2. 工具，测试，构建(grunt，gulp，webpack...)，抓取
+3. 依赖模块
+
+### 服务器
+1. apache
+2. nginx
+3. iis
+4. node
+...
+用于web网站请求的服务器，必须要遵循http
+
+### 搭建node服务器
+```
+const http = require('http');
+const server = http.createServer((request, response) => {
+  // 有请求就会执行这个回调函数
+  console.log('请求进来了');
+  // request 请求，接收的数据
+  // response 响应  发送的数据
+  response.write("aaa");
+  // 需要添加end结束符号，浏览器才能结束请求，不然会一直等
+  response.end();
+});
+// 监听端口号,
+server.listen(8080)
+
+```
+
+### 默认端口号
+1. http：80
+2. ftp：21
+3. mysql：3306

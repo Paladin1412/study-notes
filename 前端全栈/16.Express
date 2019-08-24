@@ -1,0 +1,272 @@
+### express
+入门简单，做东西极其麻烦，主要依赖回调函数
+koa: 入门麻烦，做东西简单，generator / async
+
+1. 中间件
+2. 路由 router
+
+```
+const express = require('express');
+const server = express();
+server.listen(8080);
+
+// get方法
+server.get('/a', (req, res, next) => {
+    console.log(req, res);
+    res.write('abc');
+    res.end();
+});
+
+server.post('/upload', (req, res) => {
+    console.log('请求upload')
+});
+server.use('/xxx', (req, res) => { // 不限制请求方法
+
+});
+// 不写路径，所有请求都会进入
+server.get(() => {
+
+})
+server.post(() => {
+    
+})
+server.use(() => {
+    
+})
+```
+
+res.send(); // 返回数据 结合了write和end
+
+### 中间件-插件
+- 补充框架的功能
+- 类似流水线的作用
+server.use('中间件');
+server.use(express.static('www/')); 设置www为静态目录
+假设有多个处理函数监听同一目录，前面的一个需要调用next()才会执行到下一个处理函数。
+
+res.sendStatus(404); 返回状态码
+req.sendFile(path.resolve('a.txt')); 返回文件
+res.redirect('http://www.baidu.com'); 重定向
+
+### GET请求
+```
+server.get('/a', (req, res) => {
+    console.log(req.url, req.query);
+})
+```
+
+### POST
+使用插件body-parser处理post请求
+```
+const body = require('body-parser');
+server.use(body.urlencoded({extended: false});
+server.post('/a', (req, res) => {
+    console.log(req.body);
+});
+```
+
+### express中间件
+```
+server.use((req, res, next) => {
+    // 中间件 内容
+    const arr = []'
+    req.on('data', data => {
+        arr.push(data);
+    })
+    req.('end', () => {
+        req.body = querystring.parse(Buffer.concat(arr).toString());
+        next();
+    })
+    // req.body = {a: 1, b: 2};
+    // next();
+})
+```
+multer: 处理文件上传
+```
+const  multer = require('multer');
+server.use(multer({dest: 'upload/'}).any());
+req.body
+req.files // 文件数组信息
+
+```
+
+### cookie，session
+cookie：存在浏览器里
+容量有限4k，不安全(防篡改，加密)
+session: 存在服务器
+容量无限，安全的。
+
+cookie-session
+session不能单独存在，就是基于cookie的。
+浏览器第一次访问服务器，服务器会生成一个sess_id, 会把这个id作为cookie还给浏览器。浏览器第二次访问的时候，服务器查询到sess_id,可以识别到这个用户。
+
+npm install cookie-parser， cookie-session;
+
+```
+const cookieParser = require('cookie-parser');
+server.use(cookieParser());// 可以防篡改，但不能加密，cookie原本加密也没啥意思
+req.cookies; // 接收cookie
+req.signedCookies; // 签名的cookie
+```
+express自带发送cookie
+res.cookie('b', 5, { signed: true});
+防篡改: 一人一半
+cookieParser('fafafdsfrsdf'); 自己定义一个密钥，越长越好
+signedCookies，cookie被签名之后，可以防止篡改
+
+cookie-session
+
+```
+const cookieSession = require('cookie-session');
+server.use(cookieSession({ keys: ['xxx', 'ccc', 'eeeee'], secret: 'xxxxxx'}));
+console.log(req.session);
+if(!req.session.aaa) {
+    req.session.count = 1;
+} else {
+    req.session.count++;
+}
+```
+session劫持，把ssid拿走，粘贴到网站上
+1. session定期更换id -- 设置有效期
+2. 签名
+
+cookieSession 可以传入keys 或者secret。
+
+### 路由
+根据地址不同，调用代码不同，可以看做一个很大的switch，会按顺序，从上到下的
+路径支持正则匹配
+1、创建
+const router = express.Router();
+
+2、给路由添加内容
+router.get(地址, () => {});
+router.post(地址, () => {});
+router.use(地址, () => {});
+
+3、添加到父级
+server.use(路径, 路由);
+路由.use(路径, 路由);
+路由写不难，难在规划
+```
+const express = require('express');
+const server = express();
+server.listen(8080);
+
+const articalRouter = express.Router();
+const userRouter = express.Router();
+const abc = express.Router();
+
+// 配置路由
+articalRouter.get('/', (req, res) => {
+    console.log('文章首页');
+})
+articalRouter.get('/:id', (req, res) => {
+    const id = req.parmas.id;
+    console.log(`${id}文章详情`);
+})
+articalRouter.get('/:id/edit', (req, res) => {
+    console.log('编辑文章')
+})
+// 注册二级路由
+articalRouter.use('/abc', abc);
+// 注册路由
+server.use('/artical', articalRouter);
+server.use('/user', userRouter);
+```
+
+### 模块化
+所有语言(除js之外)都有模块系统
+1、前端
+传统 -- requirejs，seajs
+CMD 公共模块定义
+    命名空间，串行的，速度慢
+AMD 异步模块定义
+    CMD + 异步
+现代 -- vue，angular，react
+2、后端
+node模块化系统，属于node自己的
+
+
+### 服务端渲染
+后端渲染（组装）: html生成出来
+前端渲染（组装）: html生成出来
+浏览器渲染: 输入url ---》 加载 ---》 渲染
+
+前台渲染VS后台渲染
+
+前台渲染
+体积更小，更灵活，体验好
+后台渲染
+稳定，安全，利于SEO
+
+动态路由传参数，对路由更友好，利于seo，完全匹配，更适合单页面
+url传参数，只是单纯的传参，更灵活，可有可无
+
+EJS
+非破坏式，保留HTML结构
+```
+const ejs = require('ejs');
+ejs.renderFile('./template/ejs/1.html', {
+    a: 1,
+    b: 2,
+    name: '我叫<span>哈哈</span>',
+    component: 'component/header.html'
+})
+```
+PUG
+破坏式，会破坏HTML结构
+1、缩进规划换行
+```
+const pug = require('pug');
+pug.render('./template/pug/1.pug', { pretty: true, name: 'aaa', age: 18 }).then(data => {
+    console.log(data);
+}); // 保留空格换行
+```
+1.pug
+
+doctype
+html
+    head
+        meta(charset="utf-8")
+        link(rel="stylesheet",href="/css/main.css")
+        script(src="main.js")
+    body
+        div(class="page main")#id
+            ul.list.bbb === ul(class="list bbb")
+                li#id 内容内容内容
+                li 内容内容
+                li
+            p.
+                多行文本
+                多行文本
+                多行文本
+            span
+                = name
+                = age
+变量 
+= 变量
+循环
+each a in  arr
+    li= a
+
+2. ejs
+
+变量
+<body><%=a+b%></body>
+等号会将标签转译，横线不会转译
+<body><%-name%></body>
+
+循环
+<% for (let i=0; i< arr.length; i++) {%>
+    <li><%=arr[i]%></li>
+<%}%>
+
+<% 可以写任何js语法，可以直接用 %>
+
+include
+引入公共模块
+<%- include('component/header.html')%>
+include中可以添加一个变量
+<%- include(component)%>
+
+

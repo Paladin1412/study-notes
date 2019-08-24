@@ -1,0 +1,269 @@
+### 发送数据
+- 直接发送json  content-type: application/json
+{"a": 1, "b": { "c": 2 } }
+- 转译  content-type: urlencoded
+data=%7B%22.... 体积会变大，但通用
+
+### ajax发送get请求是把数据封到请求体里，而表单发送get请求是放在请求头里，可以这样理解么？
+get请求数据是放在header的第一行中。
+请求分为header 和body
+- header
+GET /a.html HTTP/1.1
+accept: html
+accept-lanuage: zh-cn
+- body
+
+### 断点续传
+http: [content-range](https://blog.csdn.net/thewindkee/article/details/80189434)
+
+### 服务端怎么判断文件类型
+1.为什么要判断，没必要
+2. 简单版: 扩展名
+    复杂版: 分析文件结构
+
+### 缓存
+1. C->S: If-Modified-Since: Sat, 02 Dec 2017 04:03:14 GMT
+2. S-C:304
+
+- 第一次请求头：
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8
+Accept-Encoding: gzip, deflate, br
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7,es;q=0.6,fr;q=0.5,pt;q=0.4
+Connection: keep-alive
+Host: localhost
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3315.4 Safari/537.36
+
+- 第一次响应头：
+Accept-Ranges: bytes
+Connection: Keep-Alive
+Content-Length: 124
+Content-Type: text/plain
+Date: Sat, 27 Jan 2018 12:16:24 GMT
+ETag: "7c-55f53907b74a4"
+Keep-Alive: timeout=5, max=100
+Last-Modified: Sat, 02 Dec 2017 04:03:14 GMT
+Server: Apache/2.4.9 (Win64) PHP/5.5.12
+
+- 第二次请求头：
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8
+Accept-Encoding: gzip, deflate, br
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7,es;q=0.6,fr;q=0.5,pt;q=0.4
+Cache-Control: max-age=0
+Connection: keep-alive
+Host: localhost
+If-Modified-Since: Sat, 02 Dec 2017 04:03:14 GMT
+If-None-Match: "7c-55f53907b74a4"
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3315.4 Safari/537.36
+
+- 第二次响应头：
+Connection: Keep-Alive
+Date: Sat, 27 Jan 2018 12:17:57 GMT
+ETag: "7c-55f53907b74a4"
+Keep-Alive: timeout=5, max=100
+Server: Apache/2.4.9 (Win64) PHP/5.5.12
+
+- 解释
+If-Modified-Since 第二次请求的时候，通过这个字段告诉服务器，说自己手里有一份，如果你那里的和我的一样，就用浏览器自己的，服务器响应状态码设置为304；If-Modified-Since后面的时间是文件最后修改的时间。
+
+文件修改时间的设置过程: 第一次S->C的时候，服务器告诉浏览器文件最后的修改时间，第二次 C->S的时候 浏览器携带修改时间询问服务器。第三次S-C的时候，服务器决定返回200还是304。
+
+### 缓存服务器
+```
+const http = require('http');
+const fs = require('fs');
+const url = require(''url');
+http.creatServer((req, res) => {
+    const { pathname } = url.parse(req.url);
+    // 获取文件日期
+    fs.stat(`www/${pathname}`, (err, stat) => {
+      if (err) {
+        res.writeHeader(404);
+        res.write('Not Found');
+        res.end();
+      } else {
+        if (req.headers['if-modified-since']) {
+          const oDate = new Date(req.headers['if-modified-since']);
+          const time_client = Math.floor(oDate.getTime() / 1000);
+          const time_server = Math.floor(stat.mtime.getTime() / 1000);
+          if (time_server > time_client) { // 服务器的文件时间大于客户端
+            sendFileToClient();
+          } else {
+            res.writeHeader(304);
+            res.write('Not Modified');
+            res.end();
+          }
+        } else {
+          sendFileToClient();
+        }
+
+        function sendFileToClient() {
+          let rs = fs.createReadStream(`www/${pathname}`);
+          res.setHeader('Last-Modifyed', state.mtime.toGMTString());
+          rs.pipe(res);
+          rs.on('error', err => {
+            res.writeHeader(404);
+            res.write('Not Found');
+            res.end();
+          })
+        }
+      }
+    })
+}).listen(8080)
+```
+获取文件信息
+```
+// 获取文件信息
+fs.stat('./www/1.html', (err, stat) => {
+  if (err) {
+    console.log('获取文件信息失败');
+  } else {
+    console.log(stat);
+  }
+});
+```
+- dev: 设备号
+- mode: 模式，权限
+- nlink: 连接数
+- uid: 
+- gid:
+- size: 大小
+- atime: 
+- mtime: 修改时间
+- ctime: 创建时间
+
+date.toUTCString(); 时间
+
+- 第一重要、缓存策略：什么数据应该缓存什么数据不应该，比如涉及到登录，用户名密码的，就不应该缓存，这叫缓存策略
+cache-control: 缓存策略通过这个请求头实现，可以服务器发也可以浏览器发，服务器告诉我浏览器要不要缓存
+expires: 可以缓存，但是会设置缓存时效
+
+```
+  // 在Last-Modified 响应头上面添加
+  res.setHeader('cache-control', 'no-cache');
+```
+
+- 第二重要、缓存实现过程：如上面
+1.第一次S->C："Last-Modified: Sat, 02 Dec 2017 04:03:14 GMT"
+2.第二次C->S："If-Modified-Since: Sat, 02 Dec 2017 04:03:14 GMT"
+3.第二次S->C：200 || 304
+
+### 多进程，多线程
+node默认：单进程，单线程
+- 多线程
+性能高，复杂，考研程序员能力
+- 多进程
+性能略低，简单，对程序员要求低
+
+主进程: 负责派生(创建)子进程，主进程越简单越好，防止崩溃。
+子进程: 干活
+
+cookie: 4k
+localStroge: 5M
+
+### 多进程
+对服务器来说，安全，性能高(更充分利用CPU)
+1. 普通程序不能创建进程，只有系统进程才能创建进程
+2. 进程是分裂出来的，只有主进程可以分裂。
+3. 分裂出来的两个进程，执行的是同一套代码
+4. 父子进程之间可以共享句柄, 端口就是一种句柄
+
+### cluster
+```
+const cluster = require('cluster');
+// 分叉，
+if (cluster.isMaster) { // 如果是主进程就分裂
+    cluster.fork();
+};
+
+```
+有几个cpu就开几个进程，并非开的个
+
+### os
+os.cpus(); cup列表
+
+```
+const cluster = require('cluster');
+const os = require('os');
+
+if (cluster.isMaster) {
+    for (const i = 0; i < os.cpus().length; i++) {
+        cluster.fork();
+    }
+    console.log('我是主进程');
+} else {
+    console.log('我是子进程')
+}
+
+```
+主进程 = 守护进程
+子进程 = 工作进程
+
+一般子进程是用来干活的，主进程做管理。
+```
+const cluster = require('cluster');
+const os = require('os');
+const process = require('process');
+
+if (cluster.isMaster) {
+    for (const i = 0; i < os.cpus().length; i++) {
+        cluster.fork();
+    }
+    console.log('我是主进程');
+} else {
+    console.log(process.pid);
+    http.createServer((req, res) => {
+        res.write('aaaa');
+        res.end();
+    }).listen(8080);
+    console.log('端口号8080');
+}
+
+```
+- 上面的程序并不会报错，因为子进程可以共享端口号。
+- process.pid: 进程的pid，作为进程的唯一区分。
+- 进程调度，多个进程，只有第一个进程工作被塞满了才会启用第二个进程，第二个也满了，再启用第三个，以此类推。最高效的方式。
+进程的开销和调度非常的耗费性能，计算机的运算是很快的，当肉眼可见时就已经表示很慢了。
+多进程不会造成死锁，死锁的意思是对文件的读写进行时，其它程序对文件的访问会限制。
+
+### 数据库
+MySQL
+数据库是一个C-S模式
+服务器对于浏览器来说是服务端，对于数据库来说是客户端。 
+
+- 库，库相当于文件夹
+- 表，表相当于文件
+
+新建库: 
+数据库的名字尽量不要用减号，可以用下划线，减号会出一些问题，写起来比较麻烦。
+数据库排序规则: 没有中文，选择unicode码(utf8_general_ci)
+
+新建表: 
+列-字段: 项目
+行: 一条数据
+
+数据类型:
+数字:
+    整数
+        tinyint(8位)  - 128 ~ 127
+        smallint:
+        mediumint:
+        int: -21亿~ 21亿 | 0 -42亿
+        bigint: 
+    小数 / 浮点数
+        float: 单精度， 大概8位小数
+        double: 双精度，理论 10^308次
+字符串:
+    小: varchar 255个
+    大: text 1G
+
+主键:
+1、性能高
+2、唯一
+
+触发器:
+ 可以理解为事件，当数据库内容发生变动的时候触发
+
+表情和图片怎么存入数据库。
+一般存储文件路径，不会存储源数据。

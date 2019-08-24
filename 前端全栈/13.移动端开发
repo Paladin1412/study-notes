@@ -1,0 +1,158 @@
+大纲:
+1. 移动端布局
+2. touch事件
+3. 库
+4. 响应式
+
+### 移动端适配
+1. viewport: 视口，可视区
+    最早-手机要照顾pc端，默认按照1024宽度解析页面。
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scaleable=no,maximum-scale=1.0,minimum-scale=1.0" />
+  个别手机initial-scale可能失效，可以用maximum-scale=1.0和minimum-scale=1.0禁止缩放
+
+2. 盒模型
+普通盒子: width=width + padding + border;
+新的盒子: width=width;
+
+3. flex
+弹性盒模型, 平分父级内容取的宽度。
+display: flex; flex: 1;
+flex布局天然就是border-box特性，并且也包含margin，可以与max-width，min-width配合
+
+4. rem
+单位: px, %, em, ...
+px: 绝对
+em: 相对自身字体
+rem: root-em 相对root字体html字体
+在不同的屏幕尺寸下，只需要调整html元素的font-size，在移动端下，一切尺寸都用rem/%
+vh和vw是给宽高分成一百份
+
+### touch 事件
+
+在网页中是mouse事件，在移动端是touch
+mousedown，move，up
+touchstart，move，end
+
+在pc端，插入几个鼠标都只有一个指针，在移动端，多个手指会有多点触摸。
+mouse，touch融合 --- pointer事件，微软推的，但现在还不流行。
+
+所有的DOM3事件都应该绑定
+
+touch的事件对象因为是多点的，所有要先取到事件对象。
+ev.targetTouches[0].clientX;
+targetTouches 全兼容
+touchs 不兼容
+
+拖拽：
+在移动端中，就算移动的再快touchmove也会监听到事件，和浏览器不一样，浏览器一旦移出就会监听不到。
+在移动端，手抬起了就不会跟着移动了，但是为了性能考虑最好也要删除掉事件。
+
+### 多点
+touchs: 不建议使用，不兼容，当前屏幕上的手指个数。
+targetTouches: 建议使用，标准, 当前被绑定节点上的手指
+
+```
+Array.form(oDiv).forEach(dom => {
+    dom.onclick = function(e) {
+        e.targetTouches;
+    }
+})
+```
+不需要做多点触摸的时候，计算平均位置 所有坐标相加除以坐标个数。
+
+1、避免影响-消除干扰
+    计算平均坐标
+2、需要多点-手势
+    旋转
+    缩放
+
+### 移动端测试
+1、chrome - 简单测试， 布局，简单JS
+2、模拟器 - 夜神模拟器
+3、真机测试 - 服务器 或者 browsersync
+```
+cnpm install browser-sync -g;
+browser-sync start --server
+```
+
+### 升级node
+```
+npm install n -g;
+```
+
+### iScrollJs
+
+- 下拉刷新
+
+### hammer
+```
+const oBox = document.querySelect('.box');
+const hammer = new Hammer(oBox);
+hammer.on('tap', ev => {
+    console.log(ev);
+})
+hammer.on('press', ev => {
+    console.log(ev);
+})
+hammer.on('swipe', ev => {
+    console.log(ev);
+})
+hammer.on('swipeleft', ev => {
+    console.log(ev);
+})
+hammer.on('swiperight', ev => {
+    console.log(ev);
+})
+hammer.on('swipeup', ev => {
+    console.log(ev);
+})
+hammer.on('swipedown', ev => {
+    console.log(ev);
+})
+hammer.on('pan', ev => {
+    console.log(ev);
+})
+```
+- 事件
+tap: 点击，轻点，300毫秒内 按下抬起有反应
+press: 点击 按住超过300毫秒才有反应
+swipe: 滑动，快速滑动(速度超过300/s) (swipeleft, swiperight, swipeup, swipedown);
+pan: 滑动(panleft, panright, panup, pandown, panstart. panmove, panend);
+start
+move
+end
+cancel
+- get
+```
+// 获取旋转
+const config = hammer.get('rotate');
+// 开启旋转
+config.set({ enable: true});
+let deg = 0;
+ley old_deg;
+hammer.on('rotatestart', ev => { 
+    console.log(ev);
+    old_deg = deg;
+})
+// 旋转的角度
+hammer.on('rotatemove', ev => { 
+    console.log(ev.rotation);
+    deg = old_deg + ev.rotation;
+})
+hammer.on('rotateend', ev => { 
+    console.log(ev); 
+})
+```
+缩放 pinch
+```
+hammer.get('pinch').set({ enable: true});
+hammer.on('pinchstart', ev => {
+
+});
+hammer.on('pinchmove', ev => {
+    ev.scale;
+});
+hammer.on('pinchend', ev => {
+
+});
+```

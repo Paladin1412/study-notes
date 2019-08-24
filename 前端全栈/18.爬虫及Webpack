@@ -1,0 +1,256 @@
+### 爬虫
+采集器，抓取数据，让程序伪装成普通用户，浏览要爬取的网站
+反爬，反抓取。
+请求一个网页
+
+```
+const url = require('url');
+const http = require('http');
+const https = require('https');
+
+
+function requestUrl(url, headers) {
+    const obj = url.parse(url);
+    let httpMode = null;
+    if (obj.protool == 'https') {
+            httpMode = https;
+        } else {
+            httpMode = http;
+        }
+    return new Promise((resolve, reject) => {
+        const req = httpMode.request({
+            host: obj.host,
+            path: obj.path,
+            headers,
+        }, (res) => {
+            if (res.statusCode >= 200 && res.statusCode < 300 || res.statusCode === 304) {
+                let arr = [];
+                res.on('data', data => {
+                    arr.push(data);
+                })
+                res.on('end', () => {
+                    const buffer = Buffer.concat(data);
+                    fs.writeFile(path.resolve('tem', '1.html'), buffer, err => {
+                        if (err) {
+                            console.log('出错');
+                        } else {
+                            console.log('成功');
+                            resolve({
+                                code: 200,
+                                body: buffer,
+                                headers: res.headers
+                            })
+                        }
+                    })
+                })
+            } else if (res.statusCode === 301 || res.statusCode === 302) {
+                console.log(res.headers);
+                resolve({
+                    code: 200,
+                    body: null,
+                    headers: res.headers
+                })
+            } else {
+                console.log('出错');
+                reject({
+                    code: res.statusCode,
+                    body: null,
+                    headers: res.headers
+                })
+            }
+        })
+        req.on('error', err => {
+            console.loh(err)
+        })
+        req.write(''); // 发送post数据
+        req.end(); // 开始请求
+    })
+}
+
+(async () => {
+    try {
+        const data = await requestUrl('http://www.baidu.com');
+        console.log(data);
+        if (data.code == 200) {
+            return;
+        } else if (data.code === 301 || data.code === 302) {
+            const value = await requestUrl(data.headers.location);
+        }
+    } catch(e) {
+        console.log('失败');
+    }
+    
+})
+
+
+```
+百度首页比较简单，容易抓取
+
+多次重定向优化版
+```
+const url = require('url');
+const http = require('http');
+const https = require('https');
+const assert = require('assert');
+
+function requestUrl(url, headers) {
+    const obj = url.parse(url);
+    let httpMode = null;
+    if (obj.protool == 'https') {
+            httpMode = https;
+        } else {
+            httpMode = http;
+        }
+    return new Promise((resolve, reject) => {
+        const req = httpMode.request({
+            host: obj.host,
+            path: obj.path,
+            headers,
+        }, (res) => {
+            if (res.statusCode >= 200 && res.statusCode < 300 || res.statusCode === 304) {
+                let arr = [];
+                res.on('data', data => {
+                    arr.push(data);
+                })
+                res.on('end', () => {
+                    const buffer = Buffer.concat(data);
+                    resolve({
+                        code: 200,
+                        body: buffer,
+                        headers: res.headers
+                    })
+                })
+            } else if (res.statusCode === 301 || res.statusCode === 302) {
+                console.log(res.headers);
+                resolve({
+                    code: 200,
+                    body: null,
+                    headers: res.headers
+                })
+            } else {
+                console.log('出错');
+                reject({
+                    code: res.statusCode,
+                    body: null,
+                    headers: res.headers
+                })
+            }
+        })
+        req.on('error', err => {
+            console.loh(err)
+        })
+        req.write(''); // 发送post数据
+        req.end(); // 开始请求
+    })
+}
+
+async function request(url) => {
+    try {
+        while(1) {
+            const { code, body, headers }await requestUrl(url);
+            if (code === 200) {
+                return { body, headers};
+            } else {
+                assert(code === 301 || code === 302);
+                assert(headers.location);
+                url = headers.location;
+            }
+        }
+    } catch(e) {
+        console.log('失败', e);
+    }
+}
+
+(async () => {
+    const { body, headers } = await request('http://tmall.com/');
+    fs.writeFile('tem/tmall.html', body, err => {
+        if (err) {
+            console.log(err);
+        } else {
+            console.log('成功', headers)；
+        }
+    })
+})()
+
+```
+### jsdom, node解析dom
+npm install jsdom -g
+```
+const JSDOM = require('jsdom').JSDOM;
+fs.readFile('tem/index.html', (err, buffer) => {
+    if (!err) {
+        const html = buffer.toString();
+        const jsdom = new JSDOM(html);
+        const document = jsdom.window.document;
+        const $ = document.querySelectorAll.bind(document);
+        const oText = $('input.text')[0].value;
+    }
+})
+
+```
+
+### 开发工具
+1、编译类 -- babel
+    ES6 -> ES5
+2、打包 -- browserify
+    一堆文件 -> 单个文件
+3、开发辅助 -- browser-sync
+    多端同步，多端辅助
+4、测试类
+    单元测试: 模块，函数
+    集成测试: 整体
+    压力测试: 性能，负载，隐藏bug
+5、grunt / gulp / webpack
+
+### webpack
+
+```
+const path = require('path');
+const Webpack = require('webpack');
+module.exports = {
+    mode: 'development',
+    entry: './src/index',
+    output: {
+        path: path.resolve('dist'),
+        filename: 'bundle.js'
+    },
+    plugins: [
+        new Webpack.HotModuleReplacementPlugin()
+    ],
+    devServer: {
+        contentBase: path.resolve('static'),
+        port: 3000,
+        hot: true,
+        historyApiFallback: true
+    }
+}
+```
+### loader
+babel-loader
+给webpack使用
+babel-core
+babel核心库
+babel-preset-env
+babel-preset-*，常用babel-preset-env 环境预设
+
+module: {
+    rules: [
+        { 
+            test: /.js$/,
+            exclude: '/node_modules/',
+            use: { 
+                loader: 'babel-loader', 
+                options: { preset: 'env'}
+            }
+        }
+    ]
+}
+
+css-loader
+作用是在js中引入css
+
+HTML更新
+
+
+反射：
+像java等静态语言一旦编辑完就固定了，想要临时引入一些代码，动态执行

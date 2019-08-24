@@ -1,0 +1,250 @@
+混合开发
+
+混合式App -- 原生语言，web
+1、为什么不直接用原生
+开发快，集成方便，兼容更多平台
+2、用的多么
+原生: 性能高，开发费力
+混合: 性能一般，开发方便
+3、怎么用
+PhoneGap：国外，干净
+APICloud: 国内，功能丰富
+公司自己的框架 -- 原生 + H5
+React Native -- 方便但不成熟
+
+PhoneGap 被adobe收购，改名叫做Codova
+```
+npm install phonegap -g;
+phonegap template list;
+```
+
+Battery Status 电池状态
+Camera 相机
+Contacts 联系人
+Device Info 设备信息
+DeviceMotion(accelerometer) 加速计 重力感应
+Device Orientation(compass) 指南针
+Dialogs(notification) 对话框
+File 文件
+File Transfer 文件传输
+Geolocation 地理位置
+Globalization 全球化，国际化
+InAppBrowser App内置浏览器
+Media 媒体 录音
+Media Capture 媒体捕获，播放 编辑相机等
+Network Information 网络信息
+Splash Screen 欢迎屏幕--在config配置
+Status Bar 状态栏--在config配置
+Whitelist 白名单--在config修改
+Vibration 震动
+
+phonegap使用注意事项
+1、onload
+不能使用onload事件、替换为deviceread
+document.addEventListener('deviceread', () => {
+
+});
+2、phonegap中添加的功能都在navigator中
+```
+document.addEventListener('deviceread', () => {
+    navigator.camera.getPicture(() => {
+        // 成功
+    }, () => {
+        // 失败
+    }, { // 配置
+        quality: 100,
+        targetWidth: 600,
+        targetHeight: 800
+    })
+});
+```
+3、文件权限
+ISO 严格，只能操作自己的文件
+Android 开放，任何文件
+
+### APICloud
+
+安装软件 apicloud studio
+
+app证书: 
+一键创建安卓证书，免费创建
+iso需要在苹果社区注册账号，上交一定的费用
+
+老师 用户中心在一个域名下 功能项目在另一个域名下怎样 实现登录共享，用户中心所在的项目不能set功能项目域名下的token
+
+OAuth2.0
+
+
+录像 var videoRecorder = api.require('videoRecorder'); 用这种写法编译到正式环境中测试依然不成功，alert(videoRecorder) 都是个undefined。像类似的这种功能都要编译到正式环境测试感觉特别麻烦，修改一点就要去云编译一下，然后手机下载，重新安装才能进行测试
+
+
+老师,ajax 底层原理是啥?
+  socket
+
+数据结构有啥?
+  太多了
+
+  通用——5、6类
+  专用——没边了
+
+现在后台要用微服务，老师能介绍一下微服务吗
+  服务
+
+------------------------------------------------------------------------
+
+系统表
+_user		用户
+_role		角色
+_accessToken	登录
+_file		文件
+
+------------------------------------------------------------------------
+
+注册用户
+username
+password
+email
+mobile
+
+{
+  "username": "blue",
+  "password": "123456",
+  "email": "aaa@111.com",
+  "mobile": "13012345678"
+}
+
+------------------------------------------------------------------------
+
+1.库
+  APICloud-rest
+  SHA1
+  APICloud-rest-SHA1
+
+2.用
+  //1.连接
+  var res=new Resouce("AppID", "AppKey");
+
+  //2.创建model
+  var mod=res.factory("表名");
+
+  //3.使用
+  mod.save({数据}, function (res, err){
+    err=>通信错误
+    res.error=>操作错误
+  });
+
+------------------------------------------------------------------------
+
+老师 nodejs 服务器tcp连接数相关的知识可以讲解一下吗？ 服务器 cpu 内存使用率都很低 tcp连接数比较大
+
+TCP连接数：
+1.系统
+  半连接——消耗带宽、消耗资源
+
+2.Node
+  全连接——保持连接
+
+------------------------------------------------------------------------
+
+刚想到一个问题,啥叫内存溢出.怎么看内存溢出?一般问题出在哪里?怎么查找这类问题?
+char str[3];
+char str2[]=['a','b','c','d','e'];
+
+if(sizeof(str2)>sizeof(str)){
+  puts("输入的太多了");
+}else{
+  memcpy(str, str2, sizeof(str2));
+}
+
+内存溢出->蠢
+
+------------------------------------------------------------------------
+
+登录：
+id -> token
+ttl -> 有效期
+
+每次打开应用，更新有效期
+
+过期了怎么办？
+1.让用户重新登录
+2.用户名、密码存起来
+
+gce8dzIfJhXyJFS7jYqZOi80QQ20lyYU7DwwZXjqQB1rcVy1HCMBQGDNxWCLtmOz
+
+
+
+{
+  title: 'aaa',
+  content: 'dasdfgsdgsdfgsdfgsdffd',
+  author: 'blue'
+}
+
+------------------------------------------------------------------------
+
+1.https
+2.http——签名
+  sha(token+xxx)
+
+------------------------------------------------------------------------
+
+前端这边做登录除了把用户名和密码带给服务器，还需要把token也发给服务器对吗，这个token是从哪里去拿呢？是cookie或者localStorage中吗
+
+为啥用token：
+不能用session——session保存在服务器
+1.导致session需要在服务器之间同步	×
+2.跨站的问题				×
+
+------------------------------------------------------------------------
+
+https
+token不是好东西——无奈
+  存在任何地方——cookie、localStorage、文件
+
+$.ajax({
+  url: 'https://wers.csdf.com/api/login',
+  data: {user: 'blue', pass: '123456'},
+  success(json){
+    json.token
+  }
+})
+
+APICloud可以和vue或react配着用吗，只用他的js-sdk这块调系统调用
+可以，不推荐
+
+------------------------------------------------------------------------
+
+混合式App：
+
+1.轻量级——PhoneGap
+2.重量级——APICloud
+3.超级App——微信
+  前端必备技能——公号、小程序
+  HTML+CSS+JS
+  WXML+WXSS+JS+API
+
+### 媒体流
+后台
+```
+const rs = fs.createReadStream('1.avi');
+sock.on('video_stream_req', () {
+  rs.on('data', (data) => {
+    sock.emait('data', data)
+  })
+})
+```
+
+前台
+```
+sock.emit('video_stream_req');
+const m = new MediaSource();
+sock.on('data', (buffer) => {
+  m.append(buffer);
+  sock.emit('video_stream_req');
+})
+oV.src = URL.createObjectURL(m);
+```
+
+### 数据结构，算法
+数据结构就是如何存取数据
+算法是解决问题的步骤

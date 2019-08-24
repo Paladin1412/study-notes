@@ -1,0 +1,51 @@
+echars: 图表-简单，功能少
+d3 数据可视化工具库，统计库
+### D3
+全能类型的库
+1. DOM操作
+2. svg绘图操作
+3. 计算 generator 核心功能
+
+代码演示
+```
+window.onload = function() {
+    const oDiv = d3.select('body').append('div');
+    oDiv.style('width', '300px');
+    const oSvg = d3.select('body').append('svg');
+    oSvg.attr('width', 800).attr('height', 600).append('path').attr('d', 'M 100 100 L 400 100 400 300 100 100 300 Z').attr('stroke', 'black').attr('fill', 'none');
+}
+```
+
+```
+const datas = [
+    {name: '1月', value: 2180},
+    {name: '2月', value: 1750},
+    {name: '3月', value: 968},
+    {name: '4月', value: 3560},
+]
+const line = d3.line(); // 创建生成器
+line.x(json => parseInt(json.name) * 50).y(json => json.value / 20);
+const res = line(datas);
+d3.select('body').append('svg').attr('width', 800).attr('height', 600).append('path').attr('d', res).attr('stroke', 'black').attr('fill', 'none');
+
+```
+
+### 全栈开发
+1、NodeJS --- 原生、框架(Express, KOA);
+2、框架 --- Angular, Vue, React
+3、混合式App
+4、微信开发 --- 公众号，小程序
+
+
+### NodeJs
+对于任何的web服务器来说和前台交互是最重要的。
+1、数据交互
+表单或者websocket，只有两种方式
+```
+http.createServer((req, res) => {
+    const { pathname, query } = url.parse(req.url);
+
+}).listen(8080)
+```
+2、数据库整合
+3、多进程
