@@ -1,0 +1,113 @@
+### Buffer类
+缓存，二进制 将二进制保存成了16进制
+new Buffer不要使用，应被废弃了
+- utf8(3个字节) gbk/gb2312(2个字节)
+
+```
+const buffer = Buffer.from("哈哈");
+console.log(buffer); // 可以看出打印出6个字节
+console.log(buffer.toString()); // 转换成string
+```
+iconv-lite 把二进制gb 准混成utf8
+
+console.log(buffer.toString('base64')); // buffer转换成base64
+二进制 11111111 一个字节有八位 377 十六进制 ff
+
+base64: 一切能放路径的地方，都可以使用base64
+一个汉字是3个字节，24个位， 3 * 8 = 4 * 6 变成四个字节
+```
+const r = Buffer.from("珠");
+r.toStrong('base64'); // 54+g   e7 8f a0
+
+// 将每个字节转为二进制
+(0xe7).toString(2); // 11100111
+(0x8f).toString(2); // 10001111
+(0xa0).toString(2); // 10100000
+// 00111001 00111000 00111110 00100000 // 6个一组，补齐8位
+// 
+parseInt('00111001', 2); // 二进制变为10进制 57
+parseInt('00111000', 2); // 二进制变为10进制 56
+parseInt('00111110', 2); // 二进制变为10进制 62
+parseInt('00100000', 2); // 二进制变为10进制 32
+
+// base64编码
+const str = 'ABCDEFGHIGKLMNOPQRSTUVWSYZ';
+str += str.toLowerCase();
+str += '0123456789+/';
+
+str[57] + str[56] + str[62] + str[32]; // 54+g
+
+```
+
+base64转移步骤
+1、获取buffer，并将每个16的buffer字节转为2进制
+2、将所有二进制拼接在一起，6个一组进行划分，在前面补00，凑成8位二进制
+3、将新的二进制转换成10进制
+4、在base64集合中分别通过10进制下标取出，并链接
+
+### BUffer的声明方式
+```
+const buffer1 = Buffer.from("哈哈");
+const buffer2 = Buffer.alloc(3); // 字节个数
+const buffer3 = Buffer.from([255, 255, 255]);
+console.log(buffer1, buffer2, buffer3);
+```
+### Buffer 中常见的方法
+- 数组的方法, forEach, slice, 
+```
+buffer.forEach(b => {
+    console.log(b);
+})
+```
+- buffer 一旦声明，就不能再增加长度， copy + concat + split
+```
+const b1 = Buffer.from("珠");
+const b2 = Buffer.from("峰");
+// const big = Buffer.alloc(6);
+// b1.copy(big, 0, 0 ,3);
+// b2.copy(big, 3, 0, 3);
+const big = Buffer.concat([b1, b2]);
+```
+### Node模块
+- 发布订阅模块, 时间发射器
+```
+const EventEmitter = require('events');
+const e = new EventEmitter();
+e.on('eat', function(data) {
+    console.log('eat1', data);
+});
+e.on('eat', function(data) {
+    console.log('eat2', data);
+});
+e.on('eat', function(data) {
+    console.log('eat3', data);
+});
+
+e.emit('eat', '1');
+```
+自己实现一个
+
+```
+class EventEmitter {
+    constructor() {
+        this._events = {};
+    }
+    on(eventName, callBack) {
+        if (this._events[eventName]) {
+            this._events[eventName].push(callBack);
+        } else {
+            this._events[eventName] = [callBack];
+        }
+        
+    }
+    emit(eventName) {
+        this._events[eventName].forEach(fn => {
+            fn();
+        })
+    },
+    off(eventName, callBack) {
+        this._events[eventName] = this._events[eventName].filter(fn => fn !== callBack)
+    }
+}
+
+```

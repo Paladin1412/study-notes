@@ -1,0 +1,387 @@
+### node 是一个runtime，不是一个语言
+- 让javascript代码运行在服务端，node 基于v8，并不包含javascript的全局
+- DOM BOM ECMAScript，node中只有ECMAScript
+- node中基本包含ECMAScript 读写文件
+- 提供简单 高性能服务器 (cpu密集 计算相关， i/o密集 文件读取)
+- 结果是靠事件驱动
+- 分配单位 靠的是进程，计算机最小运行单位，进程可以理解为一个环境，环境中可以开很多线程（node主线程是单线程 node api异步的）底层还是通过多线程来模拟了异步 libuv
+- Java 多线程 （切换执行上下文 切换的很快）并发操作同一个文件 锁的概念，node中没有锁的概念，靠回调
+- 多进程 增强稳定性，比如说浏览器，每个窗口都是一个进程，如果共用一个进程，一个网
+
+### node执行
+- 异步/同步，调用api，服务端(被调用方)可以决定此方法是 同步还是异步的
+- 阻塞/非阻塞，被调用方通知到调用方，决定调用方的状态是阻塞或者非阻塞
+***同步就是阻塞，异步就是非阻塞***
+
+### 浏览器
+两个线程，UI线程，js线程，这两个线程是互斥的，一个执行另一个就要停止
+浏览器为什么不是多线程的，防止同时操作dom
+
+### node安装
+- nvm 来切换版本 npm install nvm -g nvm use version(mac)
+- nvm-win 可以切换版本
+- npm node package manager(安装包)
+- nvm version 管理版本
+- nrm register 源 taobao/cnpm
+
+### 全局作用
+global 可以直接访问global 并且没有window的概念
+window 代理了global
+- process 进程，当前运行的环境
+- Buffer 读取的内容，都是二进制，buffer 主要是内存 缓存 16进制 可以和字符串相互转化
+- clearImmediate setImmediate 宏任务
+- clearInterval setTimeout 宏任务
+- clearTimeout 宏任务
+- eval decode encode  console.dir(global, { showHidden: true})
+- this node的文件，默认在外面套了一层函数，在函数运行时把this指向改变了，所以在文件中输出this返回{}, 在命令行输出才有内容
+// repl read-eval-print-loop 交互式解析器，
+
+### process
+- process.cwd(); current working directory
+当前的工作目录，在哪执行文件，就可以打印出位置
+- process.env; enviroment
+export NODE_ENV = production; // 设置环境和值
+console.log(process.env); // { NODE_ENV: 'production'};
+当前进程执行时候的参数
+- process.argv; grguments
+node 1.js --port 3000; // ['/usr/local/', '/User/dada', '--prot', '3000']
+const args = process.argv.slice(2);
+const obj = {}
+for (let i = 0; i < args.length; i++) {
+    if (args[i].includes('--')) {
+        obj[args[i].slice(2)] = args[i + 1];
+    }
+}
+commander 和 yargs 都是解析node参数的库
+- process.nextTick; 下一队列，微任务
+
+### node的事件循环
+- 微任务概念（promise.then  process.nextTick）只要队列发生切换时就会执行微任务
+```
+process.nextTick(function() {
+    console.log('nextTick');
+});
+Promise.resolve().then(function() {
+    console.log('then');
+});
+// nextTick, then 由此得出，nextTick比promise.then先执行
+```
+- 主执行栈
+- timers 时间 settimeout的回调
+- poll 轮训 i/o回调， fs.readFile(); 等待时间到达
+- check setimmediate 方法
+
+默认代码会从上到下依次执行(主栈 ~ check)，如果代码执行到poll发现check阶段没有 那就在poll中等待时间到达后再清空代码
+```
+setTimeout(() => {
+    console.log('timeout');
+});
+console.log('start');
+process.nextTick(() => {
+    console.log('nectTick');
+});
+Promise.resolve().then(data => {
+    console.log('then')';
+});
+// start nextTick then timeout , 微任务会在队列切换的时候执行，start队列切换到定时器队列时，中间插入了nextTick和then
+
+setTimeout(() => {
+    console.log('timeout1');
+    process.nextTick(() => {
+        console.log('nextTick2');
+    });
+});
+console.log('start');
+process.nextTick(() => {
+    console.log('nextTick1');
+    setTimeout(() => {
+        console.log('timeout2');
+    });
+});
+// start nextTick1 timeout1 timeout2 nextTick2; node 10版本
+// start nextTick1 timeout1 nextTick2 timeout2; node 11 尽量和浏览器表现相同
+
+```
+
+time 和 check
+```
+setImmediate(() => { // check
+    console.log('setImmediate');
+});
+setTimeout(() => { // timer
+    console.log('setTimeout');
+});
+
+// setImmediate setTimeout, 执行到timer的时候没到时间，所以执行到了check
+```
+切换队列，把队列清空 如果执行了很多个回调 超过了最大限制 也会切换队列
+
+面试题
+```
+let fs = require('fs');
+fs.readFile('./name.txt', 'uft8', () => {
+    setImmediate(() => {
+        console.log('setImmediate');
+    });
+    setTimeout(() => {
+        console.log('setTimeout');
+    })
+});
+// setImmediate，setTimeout; 因为IO是poll阶段，下一个阶段是check，所以一定会执行setImmediate，最后再回到timers;
+```
+node 11 有更新 宏任务执行一个就会执行微任务，更加贴近浏览器，待验证。
+
+### node中的模块
+全局属性 global
+还有一些属性
+exports module require __dirname __filename
+如果node中第一行报错，console.log(window); 提示信息如下:
+(function(exports, require, module, __filename, dirname) { console.log(window);
+window is not defined
+node 实现模块化, 特点: 命名冲突，代码方便维护，方便协作
+浏览器中实现模块化 var obj = {}; 不能完全解决命名冲突，调用过长，单例
+自执行函数实现 seajs cmd requirejs amd (异步)
+commonjs规范，通过文件读取，(utf8)实现了模块化
+
+```
+let a = (function() {
+    module.exports = Promise;
+    return module.exports;
+})();
+```
+文件就是模块，每个模块外面会自动套一个函数，并且定义了导出方式 module.exports, exports;
+定义了导入方式， require
+
+node 读到的是一个字符串，如何让字符串执行
+1. eval方式
+2. new function， 原本不能执行，包一个函数调用，就可以执行
+```
+let hello = 'yd';
+eval('console.log(hello)'); // yd; eval执行有依赖关系，所以不能用于模块
+
+const str = 'let a = 1; return a';
+const fun = new Function(str);
+console.log(fun()); // 1;
+
+// 参数传入在前面
+const b = 3;
+const str = 'let a = 1; return a + b';
+const fun = new Function('b', str);
+console.log(fun(b, str)); // 4; new Function也可以从外部传入参数，还是会污染，所以依旧不能用于模块
+```
+
+### node的模块
+- 内置模块/核心模块
+- 文件模块/自定义模块
+- 第三方模块
+
+```
+const vm = require('vm');
+// 可以提供一个沙箱环境 运行代码 干净的环境
+const hello = 'yd';
+wm.runInThisContext('console.log(hello)');
+// 上面代码会报错，提示hello未定义。
+// node中执行字符串，可以采用vm模块
+```
+
+### path处理文件路径
+basename: 基础路径, 有文件路径就不是基础路径，基础路劲是1.js
+extname: 获取扩展名
+dirname: 父级路劲
+join: 拼接路径
+resolve: 当前文件夹的绝对路径，注意使用的时候不要在结尾添加/
+__dirname: 当前文件所在文件夹的路径
+__filename: 当前文件的绝对路径
+
+```
+const path = require('path', 's');
+console.log(path.basename('1.js'));
+console.log(path.extname('2.txt'));
+console.log(path.dirname('2.txt'));
+console.log(path.join('a/b/c', 'd/e/f')); // a/b/c/d/e/
+console.log(path.resolve('2.txt'));
+```
+
+### fs文件操作
+操作文件，文件夹，权限
+readFile, readFileSync: 读取文件
+```
+const fs = require('fs');
+const buffer = fs.readFileSync('./name.txt', 'uft8'); // 如果不传入编码，出来的是二进制
+console.log(buffer);
+```
+fs.access: 判断是否存在，node10提供的，exists已经废弃, 废弃原因是不符合node规范
+```
+try {
+    fs.accessSync('./name.txt');
+} catch(e) {
+    // 文件不存在
+}
+
+```
+node引入文件时，默认添加后缀，顺序为， .js .json等等
+VSCODE 调试：打断点之后，点击左侧debug图标，小虫子
+配置修改, 当前工作目录下的当前文件
+```
+{
+    "type": "node",
+    "request": "launch",
+    "name": "my debugger",
+    "program": "${file}",
+    "cwd": "${cwd}"
+}
+```
+
+### commonjs require方法的实现
+- 内置实现了一个require方法
+- 通过大写的Module._load方法，加载模块
+- Module.resolveFilename 根据相对路径，转换成绝对路径，并且增加后缀
+- 模块的缓存问题 Module._cache
+- new Module 创建模块 id: 存的是名字 exports = {}相当于this
+- tryModuleLoad(module, filename) 尝试加载模块
+- 取出文件的后缀，加载模块(读取文件)，Module._extensions
+- Module.wrap: 把读取到的js包裹一个函数
+- 将拿到的字符串使用runInThisContext运行字符串
+- 让字符串执行并this改编成exports
+
+#### 简单版实现
+```
+const path = require('path');
+const fs = require('fs');
+const vm = require('vm');
+
+// 
+function Module(id) {
+    this.id = id;
+    this.exports = {};
+}
+
+Module.wrapper = [
+    "(function(export, module, require, __dirname, __filename) {",
+    "})"
+]
+
+Module._extensions = {
+    '.js'() {
+        const content = fs.readFileSync(module.id, 'utf8');
+        const fnStr = Module.wrapper[0] + content + Module.wrapper[1];
+        const fn = vm.runInThisContext(fnStr);
+        fn.call(module.exports, module.exports, module, req);
+    },
+    '.json'(module) {
+        const json = fs.readFileSync(module.id, 'utf8');
+        module.exports = JSON.parse(json); // 把文件的结果放在exports属性上
+    }
+}
+
+Module._cache = {};
+
+function tryModuleLoad(module) {
+    // 获取扩展名
+    const extension = path.extname(module.id);
+    // 通过后缀加载当前模块
+    module._extensions[extension](module);
+}
+
+function req(modulePath) {
+    // 获取当前要加载的绝对路径
+    let absPathname = path.resolve(__dirname, modulePath);
+    const extNames = Object.keys(Module._extensions);
+    let index = 0;
+    const oldPath = absPathname;
+    function findExt(absPathname) {
+        if (index === extNames.length) {
+           return throw new Error('文件不存在');
+        }
+        try {
+            fs.accessSync(absPathname);
+            return absPathname;
+        } catch(e) {
+            const ext = extNames[index++];
+            findExt(oldPath + ext);
+        }
+    }
+
+    absPathname = findExt(absPathname);
+
+    // 从缓存中读取，如果存在，直接返回结果
+    if (Module._cache[absPathname]) {
+        return Module._cache[absPathname].exports;
+    }
+    // 创建模块
+    const module = new Module(absPathname);
+    // 添加缓存
+    Module._cache[absPathname] = module;
+    // 尝试加载当前模块
+    tryModuleLoad(module);
+    // req方法会默认返回exports对象
+    return module.exports;
+}
+
+
+const obj = req('./a.json');
+console.log(obj);
+```
+
+### npm 的使用
+- 安装 npm install -g // usr/local/lib/node_modules;
+- 全局 在命令行中使用
+- 局部 可以在代码中使用
+```
+npm init -y; // 初始化项目
+```
+name: 包名
+version: 版本
+description: 描述
+main: 入口文件
+scripts: 脚本，命令的指令，如果运行的命令为start或test，可以省略run
+keywords:
+author:
+license:
+bin: 
+
+```
+module.paths; // []; 先在当前文件夹中查找，如果不存在就去父文件夹查找，一直查找到全局文件夹
+```
+
+### 实现全局命令
+"bin": {
+    "yindong": "./a.js",
+};
+
+npm link: 将本地的文件链接到全局，可以使用全局命令
+
+#! /usr/bin/env node: 在文件顶部添加该语句，确认代码运行的环境
+1. 在package中添加bin命令，前面是命令，后面是执行的文件
+2. #! /usr/bin/env node 使用node来运行文件
+
+### npm包的发布
+- 切换到官方源，使用nrm，发布npm包需要使用npm源
+```
+sudo npm install nrm -g;
+// nrm ls 列出所有可用源
+// nrm current  查看当前的源
+// nrm npm 切换到npm源
+```
+- 登录账号，在npm网站注册，和登录
+或者命令行登录
+```
+npm addUser
+输入用户名，密码和邮箱
+```
+- 发布
+```
+npm publish
+```
+- 取消发布
+```
+npm unpublish --force
+```
+将发布的包拉下来
+
+### yarn
+facebook推出的包管理工具
+- npm install yarn -g
+- yarn add 包名
+- yarn remove 包名
+- yarn global add 包名

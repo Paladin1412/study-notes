@@ -1,0 +1,188 @@
+### 事件循环
+- 事件环(浏览器的事件环会 node的事件环)
+- 介绍node的常见属性
+- fs模块 path 模块 模块查找 模块的分类
+- commonjs 规范的实现 esmodule
+- npm 使用
+
+### 浏览器的事件循环
+js主线程单线程的，ajax setTimeout 在浏览器中会躲开线程
+代码从上到下执行 会先执行同步代码，在执行异步
+- 宏任务mac(慢) setTimeout，微任务mic(快) promise.then  宏任务和微任务都是指代异步任务
+
+vscode编辑器 live server插件，可以启动一个5500的服务器，运行代码。
+
+vm.$nextTick(function() {}); // 异步执行 规划了所有的宏任务和微任务; vue自带的插件
+
+- setImmediate 宏任务
+只在IE下实现了支持，
+```
+setImmediate(function() {
+    console.log('立即执行定时器，不可以设置时间')
+})
+```
+- MutationObserver 微任务
+监控dom变化，dom变化了就会执行, 等待所有代码都执行完，才执行该监控
+```
+const observer = new MutationObserver(() => {
+    console.log('节点已经更新');
+    console.log(document.getElementById('app').children.length);
+});
+observer.observer(document.getElementById('app'), {
+    'childList': true,
+});
+for (let i = 0; i < 20; i++) {
+    document.getElementById('app').appendChild(document.createElement('p'));
+}
+for (let i = 0; i < 20; i++) {
+    document.getElementById('app').appendChild(document.createElement('span'));
+}
+```
+- MessageChannel 宏任务
+消息通道, 兼容性不太好,
+```
+const channel = new MessageChannel();
+// 在端口号上添加消息, 发送消息
+channel.port1.postMessage('我爱你');
+// 注册接收事件, 后绑定的接收函数，还是可以接收的到，所以可以看出是异步执行
+channel.post2.onmessage = function(e) {
+    console.log(e.data);
+};
+console.log('hello'); // 先走的hello，后出现我爱你.
+```
+
+常见的宏任务:
+setTimeout, MessageChannel, postMessage, setImmediate
+
+常见的微任务
+MutationObserver， Promise.then
+
+### EventLoop
+事件队列
+```
+setTimeout(() => {
+    console.log('timeout');
+}, 0);
+Promise.resolve().then(data => {
+    console.log('then');
+});
+console.log('start');
+```
+常见异步Api
+ajax
+setTimeout
+async Api
+
+队列: 先进先出
+栈: 先进后出
+
+主线任务从上向下执行，遇到异步任务的时候会执行，但是不会立即调用，宏任务会放在缓存中，微任务会放在微任务队列中。
+
+主栈执行完成之后，执行微任务队列，先进入的微任务，先执行。
+
+异步的宏任务时间到达之后，会放入宏任务队列中，开始执行。
+
+执行顺序:
+先执行同步，再执行微任务，等待宏任务是否到达时间，到达时间再执行。
+
+```
+setTimeout(() => {
+    console.log('timeout1');
+    Promise.resolve().then(data => {
+        console.log('then1');
+    });
+}, 0);
+
+Promise.resolve().then(data => {
+    console.log('then2');
+    setTimeout(() => {
+        console.log('timeout2');
+    }, 0);
+});
+
+// then2 timeout1 then1 timeout2
+// 异步宏任务队列中，如果有多个，会取出一个异步宏任务，执行完毕，清空一次微任务，再去取异步宏任务，并非一次取出所有到执行时机的异步宏任务
+
+```
+
+### 测试题
+```
+// 1.
+const p = new Promise(function(resolve, reject){
+    reject();
+    resolve();
+});
+p.then(function() {
+    console.log('成功');
+}, function() {
+    console.log('失败');
+});
+// 失败，因为成功和失败只会执行一个
+
+// 2.
+const promise = new Promise((resolve, reject) => {
+    console.log(1);
+    resolve();
+    conosl.log(2);
+});
+primise.then(() => {
+    console.log(3);
+});
+// 1， 2， 3
+
+// 3.
+Promise.resolve(1).then(res => 2).catch(err => 3).then(res => console.log(res));
+// 2, 因为返回的是resolve，所以会走入成功，成功返回了2，会走后面的then而不是catch
+
+// 4.
+Promise.resolve(1)
+.then((x) => x + 1)
+then(x => { throw new Error('My Error')})
+.catch(() => 1)
+.then(x => x + 1)
+.then(x => console.log(x))
+.catch(console.error);
+// 2，then中抛出异常，会走入catch，catch有返回值，会进入后面的then，then中输出2，所以不会走入后面的catch
+
+// 5.
+setTimeout(function() {
+    console.log(1);
+}, 0);
+new Promise(function(resolve) {
+    console.log(2);
+    for (var i = 0; i < 10; i++) {
+        i == 9 && resolve();
+    }
+    console.log(3);
+}).then(function() {
+    console.log(4);
+});
+console.log(5);
+// 2， 3， 5， 4， 1
+
+// 6.
+async function async1() {
+    conosle.log('async1 start');
+    await async2();
+};
+async function async2() {
+    console.log('async2');
+}
+console.log('scripy start');
+setTimeout(function() {
+    console.log('setTimeout');
+}, 0);
+async1();
+new Promise(function(resolve) {
+    console.log('promise1');
+    resolve();
+}).then(function() {
+    conosle.log('promise2');
+});
+console.log('script end2');
+// script start，async1 start，async2， promise1，script end2，promise2， setTimeout
+
+// await xxx(); 会立即执行，相当于promise函数中的内容，await下一行及后面的内容，才相当于在then中
+
+```
+
