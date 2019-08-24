@@ -1,0 +1,201 @@
+### 环境安装
+- mac电脑自带php运行环境，开启步骤
+
+已、在apache中开启php
+
+在修改httpd.conf先备份。httpd.conf.bank，在修改httpd.conf先备份。httpd.conf.bank。在修改httpd.conf先备份。httpd.conf.bank
+
+在Terminal（终端）中输入
+```
+    sudo vim /etc/apache2/httpd.conf
+```
+上面命令是打开httpd.conf（要用sudo命令，因为修改httpd.conf文件需要较高的权限，一般用户无法修改。vim命令在修改时先要按“i”键，表示insert，才能允许输入；保存时，先按"esc"，在按":wq"）
+找到
+#LoadModule php5_module libexec/apache2/libphp5.so
+
+去掉注释符号（#）
+复制一份/Library/WebServer/Documents/index.html.en，命名为info.php，和index.html.en放在同一目录下。修改info.php内容
+
+<html>
+<body>
+	<h1>It works!</h1>
+	<?php phpinfo(); ?>
+</body>
+</html>
+
+在浏览器中输入http://localhost或http://localhost/info.php，出现配置画面就表示默认apache和php搭配成功了。
+
+三、设置虚拟主机和虚拟目录
+
+虚拟主机和虚拟目录都可以理解为网站的根目录或子目录。
+
+默认开启的apache站点根目录是/Library/WebServer/Documents/，也就是说你要把代码文件放到这个目录下浏览器才会解析到。
+
+设置自己的网站的根目录（虚拟主机）
+
+在Terminal（终端）中输入
+
+```
+sudo vim /etc/apache2/httpd.conf
+```
+
+去掉下面代码最前面的#
+
+#LoadModule authn_core_module libexec/apache2/mod_authn_core.so
+#LoadModule authz_host_module libexec/apache2/mod_authz_host.so
+#LoadModule authz_core_module libexec/apache2/mod_authz_core.so
+#LoadModule dir_module libexec/apache2/mod_dir.so
+#LoadModule userdir_module libexec/apache2/mod_userdir.so
+#LoadModule alias_module libexec/apache2/mod_alias.so
+找到
+DocumentRoot "/Library/WebServer/Documents"
+<Directory "/Library/WebServer/Documents">
+把/Library/WebServer/Documents修改为自己的网站根目录，我的是/Users/user/Desktop/Project/PHPWorkspace
+DocumentRoot "/Users/user/Desktop/Project/PHPWorkspace"
+<Directory "/Users/user/Desktop/Project/PHPWorkspace">
+找到
+
+#Include /private/etc/apache2/extra/httpd-userdir.conf
+#Include /private/etc/apache2/extra/httpd-vhosts.conf
+#Include /private/etc/apache2/other/*.conf
+去掉前面的＃
+保存退出编辑
+
+在Terminal（终端）中输入
+```
+    sudo vim /etc/apache2/extra/httpd-vhosts.conf
+```
+
+去掉下面一行的＃
+#Include /private/etc/apache2/users/*.conf
+
+保存退出编辑
+创建虚拟主机
+
+在Terminal（终端）中输入
+```
+sudo vim /etc/apache2/extra/httpd-vhosts.conf
+```
+
+用#注释掉原有的两个VirtualHost
+#<VirtualHost *:80>
+#    ServerAdmin webmaster@dummy-host.example.com
+#    DocumentRoot "/usr/docs/dummy-host.example.com"
+#    ServerName dummy-host.example.com
+#    ServerAlias www.dummy-host.example.com
+#    ErrorLog "/private/var/log/apache2/dummy-host.example.com-error_log"
+#    CustomLog "/private/var/log/apache2/dummy-host.example.com-access_log" common
+#</VirtualHost>
+
+#<VirtualHost *:80>
+#    ServerAdmin webmaster@dummy-host2.example.com
+#    DocumentRoot "/usr/docs/dummy-host2.example.com"
+#    ServerName dummy-host2.example.com
+#    ErrorLog "/private/var/log/apache2/dummy-host2.example.com-error_log"
+#    CustomLog "/private/var/log/apache2/dummy-host2.example.com-access_log" common
+#</VirtualHost>
+
+添加
+<VirtualHost *:80>
+    DocumentRoot "/Users/user/Desktop/Project/PHPWorkspace"
+    ServerName phpworkspace
+    ErrorLog "/private/var/log/apache2/phpworkspace-error_log"
+    CustomLog "/private/var/log/apache2/phpworkspace-access_log" common
+<Directory />
+    Options Indexes FollowSymLinks MultiViews
+    AllowOverride None
+    Order deny,allow
+    Allow from all
+</Directory>
+</VirtualHost>
+保存
+
+
+
+四、添加dns解析
+
+在Terminal（终端）中输入
+
+sudo vi /etc/hosts
+添加
+127.0.0.1        phpworkspace
+
+把第二步中的info.php拷贝到自己网站的根目录（我的是/Users/user/Desktop/Project/PHPWorkspace），在浏览器中输入自己的创建的主机名（我的是phpworkspace，你可以输入http://phpworkspace或http://phpworkspace/info.php），出现我上面贴的图表示成功。如果遇到403错误吗，请看下面
+
+五、遇到的问题
+
+打开网站错误码403
+
+Forbidden
+
+You don't have permission to access /HelloMac.htm on this server.
+
+网上有很多的解决方法，我这里讲两种
+
+1、没有设置默认页面或根站点下没有页面文件
+
+（1）、打开httpd.conf
+修改
+
+DirectoryIndex index.html
+为如下
+DirectoryIndex index.html index.php index.jsp index.htm
+这是为站点设置默认页面，这时在网站的根目录（我的是/Users/user/Desktop/Project/PHPWorkspace）下必须要有index.html index.php index.jsp index.htm这四种文件之一，否者还是可能会出现。那是因为你在设置虚拟主机时是这样写的
+
+<Directory />
+    Options FollowSymLinks MultiViews
+    AllowOverride None
+    Order deny,allow
+    Allow from all
+</Directory>
+要改成
+<Directory />
+    Options Indexes FollowSymLinks MultiViews
+    AllowOverride None
+    Order deny,allow
+    Allow from all
+</Directory>
+
+
+2、找到自己设置的网站根目录文件夹（我的是/Users/user/Desktop/Project/PHPWorkspace），右键"显示简介"，勾选共享的文件夹。
+
+### mac电脑命令
+
+sudo apachectl start    启动服务器
+sudo apachectl stop     停止服务器
+sudo apachectl restart  重启服务器
+
+### apache目录解析
+
+bin: 主程序
+conf: 主配置，httpd.conf
+htdoc: 网站默认目录
+modules: 模块目录
+logs: 日志目录
+
+- http.conf文件
+DocumentRoot: 文档跟目录，指定的跟目录必须存在，并且共享，不能有汉字
+DirectoryIndex: 网页入口文件
+listen: 端口号
+
+- 设置目录访问权限
+Options 如果首页文件不存在，是否显示列表
+Order 指定Deny 和 Allow 的顺序
+Deny 禁止哪些外部Ip访问你的主机
+Allow 允许哪些外部Ip访问你的主机
+
+options 指定服务器将启动哪些服务器特性，取值
+none 禁用启用服务器特征
+All 开启所有服务器特性
+Indexs 如果首页文件不存在，则显示目录列表
+
+- 虚拟主机
+<VirtualHost *: 80>
+    serverName www.2019.com 指定虚拟主机域名
+    DirectoryIndex index.html 指定入口页 如不写继承主配置
+    DocumentRoot "E:\www"
+    <Directory "e:\www">
+        Options Indexs
+    </Directory>
+</VirtualHost>
+如有多个虚拟机，第一个优先级最高

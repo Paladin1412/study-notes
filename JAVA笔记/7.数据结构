@@ -1,0 +1,266 @@
+byte -> byte
+int -> Integer
+char -> Character
+short -> Short
+long -> long
+boolean - boolean
+float -> Float
+double -> Double
+
+基本数据类型对象包装类特点
+用于在基本数据和空字符串之间进行转换。
+```java
+parseByte();
+parseInt();
+parseShort();  //静态方法
+parseInt("12"); // 变成整型
+toString(int 123); // 变成字符串
+Integer.toString(5); // “5”
+toString(5, 2); // 101 转为二进制输出
+```
+
+### Integer 类构造方法
+Integer(String) 构造方法
+```
+Integer i = new Integer("123456789"); // 需要用非静态方法转换
+int in = i.intValue(); 
+```
+Integer类的方法
+静态方法:
+MAX_VALUE:
+MIN_VALUE: 
+进制转换方法:
+toBinarString(int); // 转为二进制
+toOctalString(int); // 转为八进制
+toHexString(int); 转为16进制
+返回值为字符串
+自动装箱和自动拆箱,
+```
+integer i = 1; // 引用型i指向了基本类型，自动装箱，基本数据类型，直接变成对象，拆箱相反。
+Integer in = 1; // 自动装箱，将1转为 new Integer("1");
+in++; // 自动拆箱，in是引用型，1是基本型，将new Integer("1")转为1;
+```
+优点: 基本类型和引用类型直接计算，JDK1.5以后增加的功能
+缺点: 空指针异常
+
+Integer in = null; // null.intValue(); 报错
+        in = in + 1;
+```
+Integer a = 127;
+Integer b = 127;
+(a == b) true  a.equals(b); true
+```
+当数据在byte范围内，jvm不会重新new对象。不在byte则重新new
+
+### System类
+不能继承，不能实例化，都是静态方法，类名打点调用
+currentTimeMills(); 返回毫秒值
+嵌套循环效率低，很低
+exit(); 退出虚拟机 参数为终止码，非0为异常终止，结束
+gc(); 收取垃圾， finalize() {}
+虚拟收取垃圾时，会调用类中的finalize方法
+getProperty(); 获取执行健指示的系统属性，java.version 等
+getProperties(); 获取当前操作系统的属性，静态方法
+arraycopy(); 复制数组
+arraycopy(源数组, 数组源的起始索引, 目标数组, 目标数组的起始位置, 要复制数组的数量);
+
+### Math类
+数学方法类：初等函数，对数，平方根，三角函数，工具类
+静态方法
+Math.PI
+abs()
+max()
+ceil()
+floor()
+round() 四舍五入
+pow(); 乘方
+sqrt(); 开方
+random(); 0.0 ~ 0.1 之间，
+
+### Arrays类 数组工具类，静态
+sort(数组): 升序排列
+binarySearch(数组, 被查找元素); 返回索引，找不到返回负的
+toString(数组); 将数组变为字符串，可以直接看数组元素
+
+### BigInteger
+大数据，超过long
+是一个对象，不支持进本加减乘除，要使用方法
+构造方法： 传入string类型 超级大的整数运算
+```
+BigIngeter b = new BigInteger("1234567890123456789"); // 在Math包中
+```
+add(); 加
+subtract(); 减
+multiply(); 乘
+divied(); 除
+
+### BigDecimal
+浮点大数据
+浮点数计算不精确，因为计算机二进制，为解决精度所以采用BigDecimal, 建议使用，传入String最精确。
+使用方法同BigInteger，不能整除会报错，要确定保留位数
+devide(dividsor, scale, roundingMode);
+```
+b1.devide(b2, 2, BigDecimal.ROUND_UP);
+```
+ROUND_UP
+ROUND_DOWN
+ROUND_HALF_UP 四舍五入
+ROUND_HALF_DOWN 五舍
+
+### 集合
+
+集合只存储对象，通过装箱与拆箱也可以写基本类型
+ArrayList 是一个存储的容器，必须使用集合存储对象，取出对象
+add() 添加
+get() 通过索引获取
+了解集合自身特性
+Collection 接口常用的子类接口有，List, Set
+List 常用的子类有 ArrayList, LinkedList 类
+Set 接口常用的子类有HashSet类，LinkedHashSet类
+Collection 是集合的根接口
+List 可以存储重复有序，Set不能存储重复，无序排列
+clear() 清空
+```
+ArrayList implements List --> List extends Collection
+Collection<String> cd = new ArrayList<String>();
+```
+contains() 判断是否包含
+size();
+toArray();
+remove(); 移除指定元素，删除为true，失败为false
+
+### Iterator迭代器
+迭代器，就是遍历，集合
+hasNext() 判断有没有可以被取出的元素，布尔值
+next() 取出集合下一个元素， array是ArrayList实例
+array.iterator(); 
+```
+Iterator it = array.iterator();
+it.hasNext();
+it.next();
+Collection<String> coll = new ArrayList<String>();
+Iterator<String> it = coll.iterator();
+boolean b = it,hasNext();
+String s = it.next();
+```
+增强for forEach
+for ( 数据类型 变量名: 数组或集合) {
+    sop(变量);
+}
+for (int i:arr) {
+    i;
+}
+优点: 代码少，方便
+缺点: 没有索引
+
+### 泛型
+解决安全隐患，明确数据类型
+JDK1.出现新的安全机制，保证程序的安全性
+泛型: 指明了集合中存储数据的类型，
+java泛型是伪泛型，ArrayList<String> 编译手段
+arr.add("")；不是string编译失败，存储的是string类，成功编译后class文件，没有泛型的所以是伪泛型，c++有泛型
+实现类，实现接口的同时，也指定了数据类型
+ArrayList<? extends Employee> 子类补丁，继承父类
+
+### List接口
+1、有序的collection，存储顺序和取出顺序一致
+2、具有索引，对列表中每个元素插入位置精确控制
+3、可以存储重复元素
+List实现类: ArrayList, LinkedList
+特有方法
+add(idx, dom) 添加
+get(idx) 获取
+remove(idx) 移除
+sublist(startIdx, endIdx) 返回子列表，其实，结束
+set(idx, dom) 返回dom，修改指定元素，返回改之前的元素
+遍历方式，迭代器，for循环，增强for
+迭代器并发修改宜昌
+数组特性
+查找元素快，但是增删慢，只能手动增删
+链表: 多个节点通过地址链接，类似手拉手，地址没有关系查找，效率慢，增删元素快
+arraylist特点: 不同步的，使用频率最高，可用查询，效率高，
+LinkedList增删时使用 效率高查询慢，线程不同步
+链表结合的特头功能，查询慢，增删快，不能用多态
+
+addFirst
+addLast
+getFirst
+getLast
+isEmpty
+removeFirst
+removeLast
+
+Vector集合
+Vector 存储结构也是数值，增长的对象数组，最早的本质与ArrayList一样，不同点是同步的，速度慢，被ArrayList取代。
+addElement
+elements()； 返回向量枚举值，迭代器
+
+Set接口
+不允许重复元素，只存一个，不存第二个
+遍历：迭代器，增强for，因为没有索引，方法与collection一直
+Set 依赖map集合，HashMap，set无序存取不一致
+
+HashSet集合
+存储取出速度快，线程不安全
+hashCode() 哈希值，位置
+
+### Map
+键值对，
+HashMap集合，LinkedHashMap
+Map<key, Value> 数据类型
+方法,put("a", 1);
+```
+Map<String, Integer> m = new HashMap<String, Integer>();
+m.put("a", 1);
+m.put("b", 2);
+```
+put方法返回值，返回被覆盖前的值
+get("a") // 1 获取值
+遍历
+keySet 返回一个key的集合，set获取后用遍历迭代器
+getClass() 返回类的全名： 所有对象都可用，是object的方法
+Entry 键值对对象，将映射关系变成对象
+getkey();
+getValue();
+entrySet(); 键值对映射关系获取
+1、调用map集合方法entrySet()将集合中的映射关系对象存在Set， Set<Entry<k, v>>
+2、迭代Set集合
+3、获取出的set集合，是映射关系
+4、通过映射关系对象方法，getkey(), getValue() 获取键值对
+Set<Map.Entry<Integer, String>> set = map.entrtSet();
+
+LinkHashMap继承自HashMap, 保证存储顺序，
+HashTable: 特点与HashMap一样，不同点，安全，效率低、被HashMap取代
+hashMap允许存储null值，HashTable不能存储null
+HashTable的子类，properties子类，与io流配合，变成永久
+
+### 可变参数
+
+### Collection工具类
+Collections.sort对list进行排序，不能用set因为无序。
+Collections.binarySearch: 对list集合进行二分搜索法，参数(集合，元素);
+返回索引值，找不到返回负插入点减1
+Collections.shuffle(); 对list随机排序
+
+### 异常类
+Throwable 抛出异常类，父类
+Exception 异常，小问题
+Error 报错，需修改
+异常类关键字，throw，必须写在方法内部，抛出异常，抛对象
+```
+throw new Exception("消息")， 还需要在方法的大括号前写上，throws Exception 调用的方法前也要写这句， throws Exception
+```
+
+try catch finally
+异常可以多个写，用逗号分开
+多catch捕获， try {} catch{} catch {} finally {}
+多个catch写在一起，
+1、异常类名顺序，按继承关系书写
+finally代码块，无论有没有异常，该段代码块都会执行
+System.exit(0) 停止虚拟机
+finally常用于释放资源
+异常出现可以使用throws抛出，也可以自己处理 不建议throws建议try catch
+
+异常分类:
+编译时期异常，不处理会编译失败，throws 或 try catch
+运行时期异常，RuntimeException 或是他的子类，

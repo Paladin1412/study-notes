@@ -1,0 +1,179 @@
+包中放的是类文件，相当于电脑中的文件夹，类比较多，通常分类管理，功能相同的放在一个文件夹，一个包
+声明: com.xuzhifei.demo
+通常使用公司的网址犯些，可以有多层包，包名采用全部，小写字母，多层之间用.链接
+类中包的生命格式
+package 包名.包名.包名...;
+util: 工具包
+io: 流的读写文件
+lang: 核心包
+
+导入包:
+```
+import java.util.Scanner;
+import java.util.*; // 导入util文件下的文件，不包含文件夹，一定要导入到最后一层文件夹才算导入成功
+```
+自己写的包
+```
+import com.feiyang.*;
+```
+ctrl+ shift + o: 一键导入所有引用的包
+
+```
+java.util.Random r = new java.util.Random;
+```
+一旦有了包名，类名也需要带上包名
+
+访问修饰符:
+public：公共，最大权限，任何位置都可以用
+protected：本包中的类和其他包中子类可以范根
+default：同一包下可以引用，不同包的什么都不能引用
+private：私有，只能在本类使用
+不同的包内的类也可以继承，继承后如果权限是default不能用pritected给子类用，调用方法: 受保护权限，只能在子类的里面，调用父类的受保护方法，直接调用abc();
+注意:
+1.要想仅能在本类中访问使用private修饰
+2.要想本包中的类都可以访问，不加修饰符
+3.要想本包中的类与其它包中的子类可以访问使用protected修饰
+4.要想所有包中的所有类都可以访问使用public修饰
+
+{} 代码块，作用域
+代码块要先执行
+静态代码块 static {}
+执行顺序: 静态代码块，只执行一次，代码块new几次执行几次
+
+Eclips
+ctrl + T 查看所选中类的继承树
+lang中的所有类，不需要导入，直接用
+JDK: JRE虚拟机核心库，开发工具
+
+Alt + / 自动补全
+public 修饰类，方法，成员变量；最大权限
+protected 修饰类，方法，成员变量；受保护
+默认权限:
+private: 方法，成员变量
+static：静态，成员方法，可被类名直接调用，优先级高，共享
+final：类，方法，成员变量，局部变量，常量，不能继承不可重写
+abstract：抽象，类，方法；
+不能混用
+抽象类和私有，静态final，重写，直接调用，阻止重写
+成员变量和局部变量
+如果属性是本身的就是成员变量，如果不是则取局部变量
+
+java的api
+api: 应用程序接口，application programming interface
+java的api是java中供给的类
+
+Object概述
+object是层次接口的跟类，每个类都使用object作为超类，所有对象(包括数组)都实现这个类的方法
+
+queals(object obj) 其它没够对象是否与此对象相等，返回布尔
+```
+p1.equals(p2); // 在引用型中 == 不叫内存地址是否相同。需要重写equals方法，比较地址没有意义
+```
+toString(); 返回该对象字符串表示，输出语句中，写的是一个对象，默认调用对象的toString方法
+
+### String类
+所有的字符串都是String的对象
+字符串是常量，一旦创建不可更改，字符串的本质是一个字符的数组
+```
+char[] arr = char[3];
+```
+指向改变，内存地址变了，字符串没变
+比较两个字符串用equals，
+length(); 字符串长度
+substring(int i); 返回一个新字符换
+startsWith(string s, int); 判断此字符串从指定位置开始是否以指定的前缀开头
+endWith(String s); 判断此字符串是否以指定的后缀结尾
+contains(string s): 判断是否存在指定字符
+indexOf();
+getBytes();
+toCharArray() 将字符串转为字符数组
+qquals():
+equalsIgnoreCare(): 忽略大小写
+charAt(int)
+substring()
+toUpperCase()
+toLowerCase()
+
+### 字符串缓冲区
+StringBuffer
+提高字符串效率，String消耗性能
+可变的字符序列。
+StringBuffer的方法使用
+append() 将指定字符追加，可以连写，append().append();
+```
+StringBuffer buffer = new StringBUffer();
+buffer.append("123");
+```
+delete(int, int);移除指定位置区域字符串，包含开始，不包含结束
+insert(int, String)
+replace(int, end, string);
+reverse();
+toString(); 将缓冲区变为string类型
+
+### StringBuilder类
+StringBulder与StringBuffer几乎完全一样，是兼容类，使用方式一致
+StringBuffer线程安全，速度慢
+StringBuilder单线程，线程不安全，速度快
+常用: stringBuild
+
+Date对象
+```
+System.currentTimeMillis(); // 返回long类型参数，当前日期毫秒值
+long time = System.currentTimeMillis();
+```
+时间原点: 公园1970年1月1日午夜十二点，毫秒值0
+Date(long date);
+
+### Calendar日历对象
+```
+Date date = new Date(); // 系统时间和日期
+```
+CST: 中国标准时间
+Long型后要加L: 12325676876453243456L;
+getTime(); 返回long毫秒值
+```
+Date date = new Date();
+long l = date.getTime();
+date.setTime(31313213213123123L);
+```
+
+日期格式化
+DateFormat: 日期格式化，在text包中
+SimpleDateFormat: 子类对象，可实例化
+```
+SimpleDateFormat sd = new SimpleDateFormat("");
+```
+yyyy: 年
+MM： 月份
+dd: 天数
+HH: 0~23小时
+mm：分钟
+ss：秒
+yyyy年MM月dd天
+```
+String date = sd.format(new Date()); // 返回字符串
+SimpleDateFormat sd = SimpleDateFormat("yyyy-MM-dd");
+Date date = sd.parse("1995-5-6"); 字符串转日期
+```
+Calendar： 日历
+直接用，不需要实例化
+```
+Calendar c = Calendar.getInstance(); 获取当前日历对象
+c.get(Calendar.YEAR); 年份
+c.get(Calendar.MONTH); 月份 + 1
+c.get(Calendar.DAY_OF_MONTH) 天数
+```
+设置日历
+set
+set(int field, int value);
+field: 设置的是哪个日历字段
+value: 设置后的具体值
+set(int year, int month, int day); 设置年月日
+```
+Calendar c = Calendar.getInstance();
+c.set(Calendar.MONTH, 9);
+c.set(2019, 5, 1);
+```
+add方法: 日历偏移量
+c.add(Calendar.DAY_OF_MONTH,280)； 天数偏移，支持正负数
+getTime(); 把日历对象转为Date日期对象

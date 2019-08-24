@@ -1,0 +1,80 @@
+### 链接数据库
+mysql_connect 链接函数，返回资源，php可以链接多重数据库
+```php
+resource $link = mysql_connect("localhost", "root", "123456");
+var_dump($link);
+```
+使用@符号，屏蔽错误
+```
+$link = @mysql_connect("localhost", "root", "123456");
+```
+mysql_error: 返回上一次mysql执行失败时的文本错误信息
+```
+echo mysql_error();
+```
+exit(): 结束程序，输出提示信息，
+```
+exit(["信息"]);
+```
+mysql_select_db(); 选择当前要操作的数据库，返回布尔值
+参数1: 数据库名称
+参数2: [资源，默认上一次的资源]
+```
+if (mysql_select_db($db_name, $link));
+```
+
+操作数据库
+1、mysql_query();
+参1: sql 语句
+参2: [资源链接]
+操作成功时，返回结果集，失败返回false；
+
+mysql_fetch_row(); 返回值，array， 从结果集获取一行；
+mysql_fetch_array;  取出一行，作为混合数组返回， 参数2: 返回数组的类型
+mysql_fetch_assoc(); 取出一行，已关联数组返回
+mysql_num_rows(); 获取结果集的长度。
+
+mysql_query("set names utf8"); 在选择数据库之前设置方才有效
+
+mysql_fetch_array: 参数2如下，不需要加引号，是常量。
+MYSQL_BOTH 两种下标都存在
+MYSQL_ASSOC 字符型下标
+MYSQL_NUM: 数字型下标，相当于mysql_fetch_row()的功能
+
+PHP内置函数
+incluse(); 包含文件， 如果文件不存在，报错，但不阻塞后面程序执行。
+```
+include $filename;
+include($filename);
+```
+require(); 包含文件，如果文件不存在，报错并且阻塞代码运行
+```
+require $filename;
+require($filename);
+```
+header(); 文件头信息，自定义的http报文
+```
+header("Content-type", "text/html;charset=utf-8"); // 设置一个返回的字符集
+header("location", "http://www.baidu.com"); // 网页跳转
+```
+date(format, Time); 参1，格式化时间格式，参2，时间戳/秒
+urldecode(); 编码
+urlencode(); 解码
+md5(); 加密成md5值；以32个字符十六进制数字形式返回散列值。
+define(): 定义全局变量， 参1: 变量名，大写， 参数2: 变量的值
+ucfirst(): 首字母大写
+strtolower(): 将字符串转为小写
+strtoupper(): 将字符串转为大写
+addslashes(): 转译特殊字符
+htmlspecialchars(): html标签转译
+htmlentities(): html标签转译
+array_map(function, arr): 遍历数组
+json_encode: 将对象转为json
+json_decode: 将json转为对象
+get_object_vars(): 将obj转为数组；
+
+全局对象
+$_SERVER: 获取服务之星环境信息，以及客户端信息；
+$_SERVER["ROMOTE_ADDR"]: 客户端的IP地址
+$_SERVER["SERVER_ADDR"]: 服务器的IP地址
+$_SESSION: session容器

@@ -1,0 +1,67 @@
+基本数据类型: 四类八种
+- 整型
+byte -128 ~ 127
+short -32768 ~ 32767
+int -2147483648 ~ 2147483648
+long -2^65 ~ 2^65 -1
+- 浮点型
+float
+double
+- 字符型
+char
+- 布尔型
+boolean
+
+注意：字符串是引用数据类型，不是基本数据类型
+变量定义后，不赋值，不能使用。输出时报错，编译不会报错。
+变量的作用范围在一对大括号内。
+变量不允许重复定义
+
+数据类型自动转换
+
+数据类型从小到大依次
+byte -> short -> int -> long -> float -> double
+取值范围小的类型可以直接转为取值范围大的。
+取值范围大的类型不能直接转为取值范围大的。
+
+```java
+public class DataConvert {
+    public static void main(String[] args) {
+        int i = 100;
+        double d = i;
+        System.out.printIn(d);
+    }
+}
+```
+
+强制类型转换
+被转后的数据类型 变量名 = (被转后的类型)被转换的数据;
+int i = (int)3.14;
+```java
+public class DataConvert {
+    public static void main(String[] args) {
+        double d = 3.14;
+        int i = (int)d;
+        System.out.printIn(i);
+    }
+}
+```
+
+```java
+public class DataConvert {
+    public static void main(String[] args) {
+        byte b = (byte)200;
+        System.out.printIn(b); // -56
+    }
+}
+```
+强制类型转换，没有要求的时候，不要做，会丢失精度。
+任何类型，只要和字符串想加，都会变成字符串。
+
+逻辑运算符
+& 只要一边是false，运算结果就是false
+| 只要一边是true，运算结果就是true
+^ 抑或 两边相同为false，不同为true
+! 取反
+&& 短路与，一边是false，另一边不运行
+|| 短路或，一边是true，另一边不运行
