@@ -138,3 +138,27 @@ rs.on('error', function(error) {
     console.log(error);
 })
 ```
+
+### 跨域
+```
+const xhr = new XMLHttpRequest();
+xhr.open('PUT', 'http://127.0.0.1:3000/userlist', true);
+xhr.resopnseType = 'json';
+document.cookie = 'token=100';
+xhr.withCredentials = true; // 跨域不允许携带cookie，设置强制携带，需要要求服务端设置的允许域名不能为*
+xhr.setRequestHeader('token', 'asd.askfs.g'); // 设置请求头
+xhr.onreadstatechange = function() {
+    if (xhr.status === 200 && xhr.readyState === 4) {
+        
+    }
+}
+xhr.send();
+```
+服务端
+```
+res.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:5500'); // 允许跨域的域名
+res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,DELET,OPTIONS,POST');
+res.setHeader('Access-Control-Allow-Headers', 'Content-type,token'); // 允许携带的请求头
+res.setHeader('Access-Control-Max-age', 10); 允许权限测试的缓存时间，单位秒，options的发送间隔
+res.setHeader('Access-Control-Allow-Credentials', true); // 允许跨域写到cooke
+```
