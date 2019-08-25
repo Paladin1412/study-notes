@@ -213,7 +213,7 @@ function render(template, data) {
 
 ```
 function render(template, data) {
-    template = template.replace(/<%([\s\S]*?)%>/g, function() {
+    template = template.replace(/<%=([\s\S]*?)%>/g, function() {
         return '${' + arguments[1] + '}';
     })
     let head = 'let str;\r\nwith(data){\r\n';

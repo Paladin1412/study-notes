@@ -1,0 +1,57 @@
+### 缓存
+缓存是服务端的实现。
+前端缓存只有pwa
+from memary cache
+
+Cache-Control: max-age=2952000 最大缓存时间，单位是秒
+Etag: "adasd-dasdas-dada" 实体头，MD5戳，对比缓存
+
+### 缓存分类
+- 强制缓存
+只要开启了，就不要请求服务器了(首页没办法强制缓存)
+- 协商缓存/对比缓存
+先对比一下，文件有没有变化，如果没有变化，返回304，有变化返回200
+
+### 强制缓存
+设置请求头
+```
+res.setHeader('Cache-Control', 'max-age=10'); // 设置10秒强缓存
+res.setHeader('Expires', new Date(Date.now() + 10000).toGMTString()); // 和cache-control相同，低版本浏览器不支持cache，需要使用Expires兼容
+```
+### 协商缓存
+第一次请求的时候，设置一个头 last-modified 最后修改时间
+再次请求的时候，会带上这个时间 If-Modified-Since
+```
+res.setHeader('Last-Modified', stat.ctime.toGMTString());
+```
+缺陷:
+1. 如果文件没改，时间变了
+2. 时间精确到秒，可能会有问题
+
+使用Etag原理，实体头，实体内容
+根据文件内容，算出一个唯一的值，md5
+Etag是最准确的，但耗性能
+```
+const crypto = require('crypto');
+const md5 = crypto.createHash('md5');
+const arr = [];
+fs.createReadStream(abs).on('data', functon(data) {
+    md5.update(data);
+    arr.push(data);
+}).on('end', function() {
+    res.setHeader('Etag', md5.digest('base64'));
+    res.end(Buffer.concat(arr));
+})
+```
+If-None-Match 请求头 对应Etag 服务端设置了Etag头，再请求的时候会带上If-None-Match
+不能对大文件进行etag
+优化做法，一般根据文件大小 + 最后修改时间，生成一个etag
+
+### 一般缓存的做法
+如果浏览器访问服务器 会先加一个强制缓存，强制缓存5秒
+过了5秒之后，会在发送请求对比缓存，先判断last-modified 再判断etag，如果都成立，返回304，强制缓存5秒
+如果有变化 再返回新的文件，强制缓存5秒
+
+### pwd缓存
+使用的是离线缓存，网路不通也可以访问
+利用的是cache的api，保存在浏览器的cache中
