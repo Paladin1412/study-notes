@@ -17,3 +17,18 @@ const jsx = (
 console.log(jsx);
 ReactDOM.render(jsx, document.querySelector('#root'));
 ```
+### 手写一个React
+react默认调用createElement函数，将jsx转换成虚拟dom
+```
+function createElement(type, props, ...children) {
+    // console.log(arguments);
+    props.children = children; // children属性一般会挂在props上
+    return { type, children };
+}
+export default { createElement };
+```
+
+### 手写ReactDOM
+```
+
+```
