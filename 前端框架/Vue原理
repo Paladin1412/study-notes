@@ -1,0 +1,74 @@
+vue 数据劫持 Object.defineProperty;
+```
+function observer(obj) {
+    if (typeof obj == 'object') {
+        for (let key in obj) {
+            defineReactive(obj, key, obj[key]);
+        }
+    }
+}
+
+function defineReactive(obj, key, value) {
+    observer(value); // 判断value是不是一个对象，如果是对象，会继续监控
+    Object.defineProperty(obj, key, {
+        get() {
+            return value;
+        },
+        set(val) {
+            observer(value); // 如果设置的值是对象，需要对这个对象进行监控
+            console.log('拦截');
+            value = val;
+        }
+    })
+}
+```
+
+
+数组调用push是无效的，Object.defineProperty不支持数组
+vue重写了数组上的所有方法
+```
+['push', ''slice', 'shift', 'unshift'].forEach(method => {
+    const oldPush = Array.prototype[method];
+    Array.prototype[method] = function(...values) {
+        console.log('拦截');
+        oldPush.call(this, ...values)
+    }
+})
+
+```
+如果属性不存在，默认后添加的内容，并不会被拦截到，也就不会刷新视图
+数组不能通过长度修改，也不能通过数组的索引进行更改
+
+### devServer
+配置代理
+```
+devServer: {
+    proxy: {
+        '/api/getUser': {
+            target: 'http://127.0.0.1:3000' // 当访问getUser接口时，转发到http://127.0.0.1:3000域名下
+            pathRewrite: {
+                '/api': '', // 重写某一段路径替换为
+            } 
+        }
+    }
+}
+```
+
+自动注入全局样式
+```
+plugins: {
+    'style-resources-loader': {
+        preProcessor: 'less',
+        patterns: [
+            path.resolve(__dirname, 'src/assets/common.less')
+        ]
+    }
+}
+```
+
+defer: 异步加载，按顺序执行
+async: 异步加载，不按顺序执行
+preload: 预加载，浏览器空闲时加载数据
+prefetch: 预加载，浏览器空闲时加载数据
+
+### 手写MVVM
