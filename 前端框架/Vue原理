@@ -72,3 +72,21 @@ preload: 预加载，浏览器空闲时加载数据
 prefetch: 预加载，浏览器空闲时加载数据
 
 ### 手写MVVM
+```
+class Vue {
+    constructor(options) {
+        this.$el = options.el;
+        this.$data = options.data;
+        if (this.$el) {
+            new Compiler(this.$el, this);
+        }
+    }
+}
+
+class Compiler {
+    constructor(el, vm) {
+        // 判断el属性是不是一个元素，如果不是元素，那就获取
+    }
+}
+
+```

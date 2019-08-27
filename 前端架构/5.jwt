@@ -1,0 +1,32 @@
+### jwt
+json web token
+登录令牌
+```
+const secret = 'ydst'
+
+const jwt = require('jsonwebtoken');
+const token = jwt.sign({ username: 'admin'}, secret, {
+    expiresIn: 20, // 有效期20秒
+});
+
+app.get('/valid', (req, res) => {
+    const token = req.headers.authorization;
+    jwt.verify(token, secret, (err, decode) => {
+        // decode ==> {username: 'admin'}
+        if (err) {
+            return res.json({
+                code: 1,
+                data: 'token失效了'
+            })
+        } else {
+            res.json({
+                username: 'yd',
+                code: 0,
+                token: jwt.sign({ username: 'admin'}, secret, { // 获取新的token, 需要把token时效延长
+                    expiresIn: 20, // 有效期20秒
+                }) 
+            })
+        }
+    });
+})
+```
