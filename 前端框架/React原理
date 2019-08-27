@@ -5,9 +5,18 @@ jsx是对js语法的扩展，使我们可以用类似xml方式描述视图，执
 原理: babel-loader会预编译jsx为React.createElement(type, props, ...children)
 
 ```
+import React, { Component } from 'MyReact';
+import ReactDOM from 'MyReactDOM';
 function Comp(props) {
     return <h2>h1, {props.name}</h22>
 }
+
+class Comp2 extends React.Component {
+    render() {
+        return <h2>class组件</h2>
+    }
+}
+
 const jsx = (
     <div id="demo">
         <span>hi</span>
@@ -18,17 +27,128 @@ console.log(jsx);
 ReactDOM.render(jsx, document.querySelector('#root'));
 ```
 ### 手写一个React
+MyReact.js
 react默认调用createElement函数，将jsx转换成虚拟dom
 ```
 function createElement(type, props, ...children) {
+    // 传递类型有三种，1-原生标签，2-函数式组件，3-class组件
+    // 使用vtype属性标识元素类型
     // console.log(arguments);
     props.children = children; // children属性一般会挂在props上
-    return { type, children };
+    delete props.__source; // 无用的属性删掉
+    delete props.__self;// 无用的属性删掉
+
+    // 判断组件类型
+    let vtype;
+    if (typeof type === 'string') {
+        // 原生标签 div,span
+        vtype = 1;
+    } else if (typeof type === 'function') {
+        if (type.isClassComponent) {
+            // 类组件
+            vtype = 2;
+        } else {
+            // 函数组件
+            vtype = 3;
+        }
+    }
+    return createVNode(vtype, type, props );
 }
+
+// 实现Component
+
+export class Component {
+    // 区分function 和 class组件
+    static isClassComponent = true;
+    // 初始化数据
+    constructor(props) {
+        this.props = props;
+        this.state = {};
+    }
+    setState() {
+
+    }
+}
+
+
+
 export default { createElement };
 ```
 
 ### 手写ReactDOM
+MyReactDOM.js
+```
+function render(vnode, container) {
+    // container.innerHTML = `<pre>${JSON.stringify(vnode, null, 2)}</pre>`
+    const html = initVNode(vnode);
+    container.appendChild(html);
+}
 ```
 
+vdom.js
+```
+// 转换vdom为dom
+
+export function initVNode(vnode) {
+    // vnode 是虚拟dom数
+    const { vtype } = vnode;
+    if (!vtype) {
+        // 文本节点，TextNode
+        return document.createTextNode(vnode);
+    }
+    if (vtype === 1) {
+        // 原生节点
+        return createElement(vnode);
+    } else if (vtype === 2) {
+        // class 组件
+        return createClassComp(vnode);
+    } else {
+        return createFuncComp(vnode);
+    }
+}
+
+function createElement(vnode) {
+    const { type, props } = vnode;
+    const node = document.createElement(type);
+    // 属性处理
+    const {key, children, ...rest} = props;
+    Object.keys(rest).forEach(attr => {
+        // 特殊处理的属性：htmlFor, className
+        if (attr === 'className') {
+            node.setAttribute('class', rest[attr]);
+        } else if (attr === 'htmlFor') {
+            node.setAttribute('for', rest[attr]);
+        } else {
+            node.setAttribute(attr, rest[attr]);
+        }
+    });
+
+    // 递归可能存在的子元素
+    children.forEach(c => {
+        node.appendChild(initVNode(c));
+    })
+    return node;
+}
+
+function createClassComp(vnode) {
+    document.
+    return null;
+}
+
+function createFuncComp(vnode) {
+    document.
+    return null;
+}
+
+
+// vdom diff算法
+
+export function createVNode(vtype, type, props) {
+    // 传递类型有三种，1-原生标签，2-函数式组件，3-class组件
+    // 使用vtype属性标识元素类型
+    const vnode = {
+        vtype, type, props
+    };
+    return vnode;
+}
 ```
