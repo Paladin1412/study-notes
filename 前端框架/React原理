@@ -4,6 +4,8 @@
 jsx是对js语法的扩展，使我们可以用类似xml方式描述视图，执行速度快，类型安全，提高开发效率
 原理: babel-loader会预编译jsx为React.createElement(type, props, ...children)
 
+
+
 ```
 import React, { Component } from 'MyReact';
 import ReactDOM from 'MyReactDOM';
@@ -125,19 +127,28 @@ function createElement(vnode) {
 
     // 递归可能存在的子元素
     children.forEach(c => {
-        node.appendChild(initVNode(c));
+        // c 如果是数组
+        if (Array.isArray(c)) {
+            c.forEach(n => node.appendChild(initVNode(n)));
+        } else {
+            node.appendChild(initVNode(c));
+        }
     })
     return node;
 }
 
 function createClassComp(vnode) {
-    document.
-    return null;
+    const { type, props } = vnode;
+    const component = new type(props);
+    // 执行class组件的render得到vdom
+    const newNode = component.render();
+    return initVNode(newNode);
 }
 
 function createFuncComp(vnode) {
-    document.
-    return null;
+    const { type, props } = vnode;
+    // 因为type是函数组件，它执行直接返回vdom
+    return type(props);
 }
 
 
@@ -152,3 +163,155 @@ export function createVNode(vtype, type, props) {
     return vnode;
 }
 ```
+
+### 总结
+1、webpack + babel-loader 编译时，替换jsx为React.createElement()
+2、所有React.createElement() 执行结束，会得到一个js对象数，他能完整描述dom结构，称之为虚拟dom
+3、React-DOM.render() 可以将vdom转换为dom 追加至container中
+通过遍历vdom树，根据vtype不同，执行不同逻辑，vtype为1生成原生标签，vtype为2实例化class组件并将其返回的vdom初始化，vtype为3直接执行函数将结果初始化
+
+
+### setState原理
+设置的时候添加到更新器中，并非立即更新，合并所有的state数据，统一执行
+
+工作原理:
+setState并没有直接操作去渲染，而是执行了一个异步的updater队列 我们使用一个类来专门管理
+
+Component类中，设置isReactComponent属性，props属性，state属性，refs属性，新建一个Updater实例，将this传入进去
+```
+class Component {
+    static isReactComponent = {};
+    constructor(props, context) {
+        this.$uodater = new Updater(this);
+        this.props = props;
+        this.state = {};
+        this.refs = {};
+        this.context = context;
+    }
+}
+
+```
+
+setState方法传入一个新的state时，将state加入到addState中，updater的addState方法。Updater类中有个pendingStates属性，是个数组
+在addState中判断当前是否更新状态，如果没有更新就通知更新，如果更新就略过，通知更新方法emitUpdate中，当props和state变化都会触发重新渲染
+如果props的更新直接进行更新操作，如果是状态，则判断更新队列是否是更新中, 如不是则更新，如是，则添加到队列，一个组件有一个更新器，最上层有一个统一的更新器管理，不是各自管理各自的。
+更新队列有一个updaters属性，里面存储所有的更新，批处理batchUpdate方法，批量处理更新
+
+```
+batchUpdate() {
+    if (this.isPending) {
+        return;
+    }
+    this.isPending = true;
+    const { updaters } = this;
+    let updateer;
+    while(updater = updaters.pop()) {
+        updater.updateComponent();
+    }
+    this.isPending = false;
+}
+
+```
+updateComponent函数中有个shouldUpdate，判断是否需要更新的生命周期，getState方法用于获取state状态，内部实现时会合并state， 如果setState传入一个函数进来，会直接更新，否则会合并延迟更新
+forceUpdate可以跳过若干生命周期，直接渲染，但仍旧咨询isPending是否为更新状态，更新中进入diff算法
+
+compareTwoVnodes用于对比两棵虚拟dom树，进行最小的更新
+
+### 虚拟dom
+虚拟dom表现真实dom的结构，通过js对象的方式
+传统的dom渲染太慢，依赖dom，css，js三个引擎，每一次触发变化的时候通过diff算法，对比出最小变化，批量更新真实dom，虚拟dom的作用是减少真实dom的操作
+
+### diff算法
+复杂度是O的3n次方，如果有1000个元素，全量的比较应该是1000000次，react的比较有三个策略原则
+- WebUI中DOM节点垮层级的移动操作特别少，可以忽略不计，意思为一边整个删除，另一边整个添加
+- 拥有相同类的两个组件将会生成相似的树形结构，拥有不同类的两个组件将会生成不同的树形结构, 比如div和span
+- 对于同一层级的一组子节点，他们可以通过唯一id进行区分
+
+元素属性的更新
+如果是原生元素，则比较属性，如果是class元素，继续向下比较，所有比较之后，将所有操作做成一个patch包。统一的去操作页面，进行dom操作
+```
+function compareTwoVnodes(vnode, newVnode, node, parentContext) {
+    let newNode = node;
+    if (newVnode == null) { // 如果新节点不存在，则为删除操作
+        destoryVnode(vnode, node);
+        node.parentNode.removeChild(node);
+    } else if (vnode.type !== newVnode.type || vnode.key !== newVnode.key) {
+        destoryVnode(vnode, node);
+        newNode = initVnode(newVnode, parentContext, node.namespaceURI);
+        node.parentNode.replaceChild(newNode, node);
+    } else if (vnode !== newVnode || parentContext) {
+        newNode = updateVnode(vnode, newVnode, node, parentContext);
+    }
+    return newNode;
+}
+```
+
+
+## Hooks
+
+[Hooks](https://reactjs.org/docs/hooks-overview.html)是React16.8一个新增项，是我们可以不用创建class组件就能使用状态和其他React特性
+
+
+
+### 准备工作
+
+- 升级react、react-dom
+
+    ```bash
+    npm i react react-dom -S
+    ```
+
+### 状态钩子 State Hook
+
+
+- 创建HooksTest.js
+
+  ```react
+  import React, { useState } from "react";
+  
+  export default function HooksTest() {
+    // useState(initialState)，接收初始状态，返回一个状态变量和其更新函数
+    const [count, setCount] = useState(0);
+    return (
+      <div>
+        <p>You clicked {count} times</p>
+        <button onClick={() => setCount(count + 1)}>Click me</button>
+      </div>
+    );
+  }
+  ```
+
+  > 更新函数类似setState，但它不会整合新旧状态
+
+- 声明多个状态变量
+
+  ```react
+  export default function HooksTest() {
+    const [age, setAge] = useState(42);
+    const [fruit, setFruit] = useState('banana');
+    const [todos, setTodos] = useState([{ text: 'Learn Hooks' }]);
+    return (
+      <div>
+        <p>年龄 {age}</p>
+        <p>水果 {fruit}</p>
+        <ul>
+            {todos.map(todo=><li key={todo.text}>{todo.text}</li>)}
+        </ul>
+      </div>
+    );
+  }
+  ```
+
+### 副作用钩子 Effect Hook
+
+- 更新HooksTest.js
+
+  ```js
+  import React, { useState, useEffect } from "react";
+  useEffect(() => {
+  	// Update the document title using the browser API
+      document.title = `您点击了 ${count} 次`;
+  });
+  ```
+
+  
