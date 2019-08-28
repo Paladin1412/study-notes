@@ -246,12 +246,9 @@ function compareTwoVnodes(vnode, newVnode, node, parentContext) {
 }
 ```
 
-
-## Hooks
+### Hooks
 
 [Hooks](https://reactjs.org/docs/hooks-overview.html)是React16.8一个新增项，是我们可以不用创建class组件就能使用状态和其他React特性
-
-
 
 ### 准备工作
 
