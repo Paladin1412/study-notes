@@ -1,0 +1,56 @@
+#### nodemon
+将node挂起，每次修改不需要重新运行node
+```
+npm install -g nodemon;
+nodemon ./index.js;
+```
+每次保存都会触发更新
+
+### 调试
+- 断点
+配置debug, add configuration, 选中nodemon
+```
+{
+    "type": "node",
+    "request": "launch",
+    "name": "nodemon",
+    "runtimeExecutable": "nodemon",
+    "program": "${workspaceFolder}/index.js"
+    "restart": true,
+    "console": "integratedTerminal",
+    "internalConsoleOptions": "neverOpen"
+}
+```
+点击调试按钮，进入到调试页面
+
+### exress
+```
+const http = require('http');
+const url = require('url');
+const router = [];
+class Applicatuion {
+    get(path, handler) {
+        router.push({
+            path,
+            method: 'get',
+            handler
+        })
+    }
+    listen() {
+        // 创建一个server
+        http.createServer((req, res) => {
+            const { pathname } = url.parse(req.url, true);
+            for (const route of router) {
+                if (route.path === pathname) {
+                    route.handler(req, res);
+                    return;
+                }
+            }
+        }).listen(...arguments);
+    }
+}
+
+module.exports = function(config) {
+    return new Applicatuion(config);
+}
+```
