@@ -1,0 +1,149 @@
+是一种文档型数据库，更加灵活，每一条数据都可以不一样，即使是一张表，不需要sql语句
+复杂的业务选用关系型数据库，不复杂的适合mongodb，因为更灵活更快
+
+- 下载安装
+- 配置环境变量
+- 创建dbpath文化变化
+- 启动 mongod --dbpath=/data
+- 测试
+```
+
+show dbs; // 查询所有数据库
+use test; // 切换/创建数据库，当创建一个集合(table)的时候会自动创建当前数据库
+db.getCollectionNames() // 得到当前db的所有聚集集合
+db.fruits.find(); // 查询
+db.fruits.save({name: 'yd', age: 18}); // 插入一条数据
+db.fruits.find({age: 18}); // 条件查询
+insertMany([{},{},{}]) // 插入多条
+deleteMany(); // 删除多条
+
+```
+
+### Robo3T
+
+可视化的数据库工具
+
+### mongodb 原生驱动
+- 安装mongodb
+```
+npm install mongodb --save
+```
+- 链接mongodb
+```
+// 引入
+const MongoClient = require('mongodb').MongoClient;
+// 链接URL
+const url = "mongod://127.0.0.1:27017";
+// 数据库名称
+const dbName = 'test';
+(async function() {
+    // 创建数据库
+    const client = new MongoClient(url, { userNewUrlParser: true});
+    try {
+        // 链接数据库，返回promise
+        await client.connect();
+        console.log('链接成功');
+        // 获取数据库
+        const db = client.db(name);
+        // 获取集合
+        const fruitsColl = db.collection('fruits');
+        // 插入文档，返回promise
+        const r = await fruitsColl.insertOne({ name: "芒果", price: 20 });
+        // 查询文档
+        const q = await fruitsColl.findOne();
+        // 更新文档， 对指定字段进行更新，芒果变成苹果，前面是条件，后面是要设置的字段
+        const u = await fruitsColl.update({name: "芒果"}, { $set: {name: "苹果"}})
+        // 删除文档
+        const d = await fruitsColl.deleteOne({name: "苹果"});
+    } catch(e) {
+
+    }
+    // 关闭连接，可以不写，mongod默认会自动关闭
+    client.close();
+})();
+
+```
+
+自己写一个db.js
+```
+
+const MongoClient = require('mongodb').MongoClient;
+const conf = require('./conf.js);
+const EventEmitter = require('events').EventEmitter;
+
+class Mongodb {
+    constructor(conf) {
+        this.conf = conf;
+        this.emitter = new EventEmitter();
+        this.client = new MongoClient(conf, url, { userNewUrlParser: true});
+        this.client.connect(err => {
+            if (err) {
+                throw err;
+            };
+            console.log('连接数据库成功');
+            this.emitter.emit('connect');
+        })
+    }
+
+    // 监听事件方法
+    once(event, cb) {
+        this.emitter.once(event, cb);
+    }
+
+    col(colName, dbName = this.conf.dbname) { // collection
+        return this.client.db(dbName).collection(colName);
+    }
+}
+
+module.exports = new Mongodb(conf);
+```
+
+使用Mongodb
+```
+const mongod = require('./db');
+mongodb.once('connect', async () => {
+    const col = mongodb.col('fruits');
+    // 分页查询
+    mongo.col('fruits').find().skip(10).limit(20).toArray(); // 跳过10条，查询20条, 变为数组
+})
+```
+
+### mongoose
+优雅的Nodejs对象文档模型object document model。Mongoose有两个特点
+- 通过关系型数据库的思想来设计非关系型数据库
+- 基于mongodb驱动，简化操作
+
+### 安装
+```
+npm install mongoose -s
+```
+
+### 基本使用
+```
+const mongoose = require('mongoose');
+mongoose.connect("mongodb://127.0.0.1:27017/test");
+const conn = mongoose.connection;
+conn.on('error', () => { console.log('链接数据库失败')});
+conn.once('open', async () => {
+    // 定义一个Schema - table
+    const Schema = mongoose.Schema({
+        category: String,
+        name: String
+    });
+    // 编译一个Model 它对应数据库中复数，小写的collection
+    const Model = mongoose.model('fruit', Schema);
+    try {
+        const r = await Model.create({
+            category: "热带水果",
+            name: "苹果",
+            price: 5
+        });
+        console.log(r);
+        const q = await Model.find({name: "苹果"});
+        const u = Model.updateOne({name: "苹果"}, {#set: {name: "芒果"}})
+        const d = Model.deleteOne({ name: "苹果"})
+    } catch (e) {
+        throw e;
+    }
+});
+```
