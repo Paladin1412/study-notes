@@ -116,6 +116,45 @@ describe('hello word', () => {
         }).$mount();
         expect(vm.$el.querySelector('h1').innerHTML).to.be.contain('hello');
     })
+});
+```
+简便写法
+引入 @vue/test-utils
+```
+import { mount } from '@vue/test-utils';
+
+describe('Hello world', () => {
+    it('test 和 it一样，用哪个都可以，看支持哪个', () => {
+        const wrapper = mount(HelloWorld, {
+            propsData: { msg: 'hello'}
+        });
+        // wrapper.setProps({
+        //     msg: 'hello'
+        // })
+        expect(wrapper.find('h1').text()).to.be.contain('hello');
+    })
+    
+})
+
+```
+
+### 点击事件
+```
+import { expect } from 'chai';
+import {mount} from '@vue/test-utils';
+import Counter from '../src/Counter';
+
+describe('测试组件', () => {
+    it('测试点击按钮', () => {
+        const wrapper = mount(Counter);
+        expect(wrapper.find('#count').text()).to.be.equal('10');
+        wrapper.find('button').trigger('click');
+        expect(wrapper.find('#count').text()).to.be.equal('11');
+        // wrapper.find('button').exists();
+        // wrapper.find('button').isVisible;
+    })
 })
 ```
+
+### 事件测试
 
