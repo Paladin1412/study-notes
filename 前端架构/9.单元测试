@@ -20,4 +20,19 @@
 - chai/jest
 断言库
 
+karma + jasmine + chrome-launcher
+karma + mocha + chai/jest 使用jsdom
+
+Karma 为前端自动化测试提供了跨浏览器测试的能力，Mocha是前端自动化测试框架，测试框架需要解决兼容不同风格断言
+facebook推出的一款测试框架，集成了Mocha, chai,jsdom,sinon等功能。
+
+测试文件的名字一般和要测试的文件名称一致，后缀名一般叫xxxx.spec.js
+
+``` test.spec.js
+// 使用mocha + chai
+import { parser, stringify } from '../src/test.js';
+// it: 一个用例
+it()
+```
+
 
