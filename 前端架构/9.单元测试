@@ -28,11 +28,94 @@ facebook推出的一款测试框架，集成了Mocha, chai,jsdom,sinon等功能�
 
 测试文件的名字一般和要测试的文件名称一致，后缀名一般叫xxxx.spec.js
 
+下面是一个简单的测试用例
 ``` test.spec.js
 // 使用mocha + chai
 import { parser, stringify } from '../src/test.js';
+import { expect } from 'chai';
 // it: 一个用例
-it()
+// expect 期望
+it('我要测试parser 是否可靠', () => {
+    // parser('name=zfpx');
+    // expect(parser('name=zfpx')).to.be.equal({name:'zfpx'}); // 期望是否相等
+    expect(parser('name=zfpx')).to.be.deep.equal({name:'zfpx'}); // 对象判断需要使用deep，否则对象无法判断相等
+});
 ```
 
+```
+it('我要测试stringify', () => {
+    expect(stringify({name: 'zfpx'})).to.be.equal('name=zfpx');
+})
+```
+
+### 用例分类
+describe, 给用例外面添加一个套件
+```
+describe('测试parser', () => {
+    it('我要测试parser', () => {
+        expect('name=zfpx').to.be.deep.equal({name: ''zfpx});
+    })
+    it('我要测试parser', () => {
+        expect('name=zfpx').to.be.deep.equal({name: ''zfpx});
+    })
+    it('我要测试parser', () => {
+        expect('name=zfpx').to.be.deep.equal({name: ''zfpx});
+    })
+});
+
+describe('测试stringify', () => {
+    it('我要测试stringify', () => {
+        expect(stringify({name: 'zfpx'})).to.be.equal('name=zfpx');
+    })
+    it('我要测试stringify', () => {
+        expect(stringify({name: 'zfpx'})).to.be.equal('name=zfpx');
+    })
+    it('我要测试stringify', () => {
+        expect(stringify({name: 'zfpx'})).to.be.equal('name=zfpx');
+    })
+})
+
+```
+
+### 常见的关系
+- 相等
+- 大于/小于
+- 包含
+- 不包含
+
+```
+describe('测试方法', () => {
+    it('相等关系', () => {
+        expect(1+1).to.be.equal(2); // 数字
+        expect([1,2,3]).to.be.lengthOf(3); // 数组长度
+        expect(true).to.be.true; // 布尔值
+    });
+    it('包含关系', () => {
+        expect('zfpx').to.be.contain('zf'); // 包含
+        expect('zfpx').to.be.match(/zf/); // 匹配
+    });
+    it('大于 小于', () => {
+        expect(5).to.be.greaterThan(3); // 是否大于3
+        expect(5).to.be.lessThan(5); // 小于5
+        expect(3).to.be.not.greaterThan(10); // 不大于10
+    })
+});
+```
+
+### 测试UI
+```
+describe('hello word', () => {
+    it('传递属性后能否显示结果', () => {
+        // 原生自己测试Vue
+        // extend 方法可以根据实例创建一个类
+        const BaseExtend = Vue.extend(HelloWorld);
+        // 把组件进行挂载
+        // vm.$el mocha 测试的时候集成了jsdom
+        const new BaseExtend({
+            propsData: { msg: 'hello' }
+        }).$mount();
+        expect(vm.$el.querySelector('h1').innerHTML).to.be.contain('hello');
+    })
+})
+```
 
