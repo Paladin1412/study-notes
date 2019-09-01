@@ -157,6 +157,29 @@ describe('测试组件', () => {
 ```
 
 ### jest
+jest-vue 测试框架
+```
+import { shallowMount } from '@vue/test-utils';
+import HelloWorld from '../src/HelloWorld.vue';
+
+describe('HelloWorld', () => {
+    if ('相等', () => {
+        expect(1+1).toBe(2);
+    })
+});
+
+jest.mock('axios');
+describe('jest 测试', () => {
+    it('mock', () => {
+        const wrapper = shallowMount(HelloWorld);
+        Vue.nextTick().then(() => {
+            expect(wrapper.text()).toMatch(/zfpx/);
+        })
+    });
+})
+
+```
+
 
 
 
