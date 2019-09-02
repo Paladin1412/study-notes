@@ -29,3 +29,29 @@ virtualbox：mac
 vmware：windows
 
 ### 计算机如何启动
+BIOS 计算机通电后，第一件事就是读取刷入ROM芯片的开机程序，这个程序叫做基本输入系统Basic Input.Outoyr System
+硬件自检
+BIOS程序首先检查，硬件能否满足运行的基本条件，这叫硬件自检，如果硬件出现问题，会蜂鸣报警，如果没问题，显示硬件信息
+启动顺序
+主引导记录
+分区表
+...没啥用的硬件知识
+
+### linux使用
+登录 root 回车，输入密码 123456回车，密码输入不可见
+ctrl + alt 退出虚拟机
+
+### x-shell
+远程连接工具
+4.0版本是免费的，
+5.0以上版本开始收费
+
+### 命令
+ifconfig: 查看网卡
+ifup eth0 启动网卡
+ifdown eth0 关闭网卡
+service network restart 重启网络服务
+
+DHCP: 动态分配ip地址
+
+### linux常见命令
