@@ -294,7 +294,6 @@ class Mysql{
 		return $list;
 	}
 
-	
 	/**
 	 * 获取上一步insert操作产生的id
 	 */
