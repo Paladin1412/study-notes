@@ -308,7 +308,6 @@ class Mysql{
 	public function errno(){
 		return mysqli_errno($this->conn);
 	}
-
 	/**
 	 * 获取错误信息
 	 * @access private
@@ -317,6 +316,5 @@ class Mysql{
 	public function error(){
 		return mysqli_error($this->conn);
 	}
-
 }
 ```
