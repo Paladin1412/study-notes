@@ -1,0 +1,123 @@
+### 什么是Promise
+中文理解为"承诺"，指代在未来一段时间内会发生的事，比如JS中的一个定时器
+```
+setTimeout(function() {
+    console.log(1); // 1
+}, 1000);
+```
+上面的定时器在1秒之后会输出一个1。还比如Ajax请求，我们并不知道ajax何时会返回数据，但我们知道，数据一定会返回。
+我们把定时器，ajax这些操作称为异步，一直以来我们获取异步返回的参数使用的大多是回调函数。promise的出现，是为了让我们放弃回调函数的写法，使代码变得更优雅，可读性更强。
+
+### Promise的简单用法
+- Promise通过实例化的方式创建对象，并接收一个函数fn作为实例化的参数
+```
+var fn = function() {};
+var p = new Promise(fn);
+```
+- fn中有两个参数，一般命名为resolve 和 reject
+```
+var fn = function(resolve, reject) {};
+var p = new Promise(fn);
+```
+-  实例化的对象会有一个then方法, then 方法中接收一个两个函数作为两个参数
+```
+var fn = function(resolve, reject) {};
+var p = new Promise(fn);
+p.then(function() {}, function() {});
+```
+- fn中的两个参数都为函数，可直接执行，当执行第一个参数时，then方法中的第一个函数参数会接收到信息，当执行第二个参数时，then方法中的第二个函数参数会接收到信息。
+```
+var fn = function(resolve, reject) { resolve(); };
+var p = new Promise(fn);
+p.then(function() { console.log(1)}, function() { console.log(2)}); // 1
+```
+注意，fn中的两个参数执行互斥，意味着即使两个参数方法都被执行，也只会捕捉第一个，也就是写在前面的那一个
+```
+var fn = function(resolve, reject) { reject(); resolve(); };
+var p = new Promise(fn);
+p.then(function() { console.log(1)}, function() { console.log(2)}); // 2
+```
+上面因为reject写在前面，所以写在后面的resolve会被忽略，以至于then中只会执行第二个函数，输出2
+- fn中的两个参数执行时，传入的参数可在then方法中对应获取到，如
+```
+var fn = function(resolve, reject) { resolve("我是参数"); };
+var p = new Promise(fn);
+p.then(function(data) { console.log(data)}, function(err) { console.log(err)}); // 我是参数
+```
+一般情况下，fn的第一个参数代表成功，第二个参数代表失败
+then中的两个函数参数可以只写一个或都不写
+- p可以多个then方法连续书写，并且前一个then方法中的return值可被后面的then接收到
+```
+var fn = function(resolve, reject) { resolve("我是参数"); };
+var p = new Promise(fn);
+p.then(function(data) { 
+    return data;
+}).then(function(data) {
+    return data + 1;
+}).then((data) => {
+    return data + 2
+});
+// 我是参数12
+```
+### Promise常用方法
+- Promise.all
+接收多个promise实例组成的数组为参数，所有的promise实例执行完毕之后返回一个promise对象。then方法得到一个数组，数组中分别对应每个promise实例的返回值，按实例传入顺序排序
+```
+var promise1 = Promise.resolve(3);
+var promise2 = 42;
+var promise3 = new Promise(function(resolve, reject) {
+  setTimeout(resolve, 100, 'foo');
+});
+
+Promise.all([promise1, promise2, promise3]).then(function(values) {
+  console.log(values);
+});
+// [3, 42, "foo"]
+```
+- Promise.race
+接收多个promise实例组成的数组为参数，只要有一个实例执行完毕之后立即返回一个promise对象。then方法得到该promise实例执行完毕的返回值
+```
+var promise1 = new Promise(function(resolve, reject) {
+    setTimeout(resolve, 500, 'one');
+});
+
+var promise2 = new Promise(function(resolve, reject) {
+    setTimeout(resolve, 100, 'two');
+});
+
+Promise.race([promise1, promise2]).then(function(value) {
+  console.log(value);
+});
+// "two"
+```
+- Promise.resolve
+直接成功
+```
+var promise1 = Promise.resolve(123);
+
+promise1.then(function(value) {
+  console.log(value);
+});
+// 123
+```
+- Promise.reject
+直接失败
+```
+Promise.reject("Testing static reject").then(function(reason) {
+  // 未被调用
+}, function(reason) {
+  console.log(reason); // "Testing static reject"
+});
+```
+
+### Promise代码实现原理
+```
+// 首先创建一个Promise构造函数
+function Promise() {
+
+}
+// 因为每个Promise实例都存在一个then方法，所以在Promise的原型prototype上加入then
+Promise.prototype.then = function() {
+
+}
+```
