@@ -111,13 +111,13 @@ Promise.reject("Testing static reject").then(function(reason) {
 ```
 
 ### Promise代码实现原理
+- 创建对象
 ```
 // 首先创建一个Promise构造函数
 function Promise() {
-
 }
 // 因为每个Promise实例都存在一个then方法，所以在Promise的原型prototype上加入then
 Promise.prototype.then = function() {
-
 }
 ```
+- 
