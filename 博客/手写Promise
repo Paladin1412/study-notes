@@ -111,6 +111,15 @@ Promise.reject("Testing static reject").then(function(reason) {
 ```
 
 ### Promise代码实现原理
+- 根据Promise的基本使用方式，实现Promise的基本代码
+```
+var fn = function(resolve, reject) { resolve("我是参数"); };
+var p = new Promise(fn);
+p.then(function(data) { 
+    console.log(data);
+});
+// 我是参数
+```
 - 创建对象
 ```
 // 首先创建一个Promise构造函数
@@ -157,3 +166,4 @@ function Promise(executor) {
   executor(resolve, reject)
 }
 ```
+
