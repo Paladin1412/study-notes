@@ -120,4 +120,21 @@ function Promise() {
 Promise.prototype.then = function() {
 }
 ```
-- 
+根据promise的创建方式 new Promise(function(resolve, reject) { });可以知道，构造函数接收一个函数executor作为参数
+```
+function Promise(executor) {
+
+}
+```
+Promise创建时传入的函数会直接执行，所以:executor需直接执行，并传入两个函数resolve和reject
+```
+function Promise(executor) {
+  function resolve() {
+
+  }
+  function reject() {
+    
+  }
+  executor(resolve, reject)
+}
+```
