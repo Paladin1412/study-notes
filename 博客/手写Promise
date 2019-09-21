@@ -133,7 +133,26 @@ function Promise(executor) {
 
   }
   function reject() {
-    
+
+  }
+  executor(resolve, reject)
+}
+```
+Promise有三种状态，1、pending(等待)，2、resolved(成功)，3、rejected(失败)，默认为pendding，当构造函数中的resolve方法被执行，Promise置为resolved,当构造函数中的reject方法被执行，Promise置为rejected,
+resolved 和 rejected只能存在一种，所以只有当状态为pending的时候才会改变
+function Promise(executor) {
+  let that = this;
+  that.status = 'pending';
+  function resolve() {
+    if(that.status === 'pending'){
+      that.status = 'resolved';
+    }
+  }
+  function reject() {
+    that.status = 'rejected';
+      if(that.status === 'pending'){
+          that.status = 'rejected';
+      }
   }
   executor(resolve, reject)
 }
