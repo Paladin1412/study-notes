@@ -97,7 +97,7 @@ var promise1 = Promise.resolve(123);
 
 promise1.then(function(value) {
   console.log(value);
-});
+}, function() { console.log( value)});
 // 123
 ```
 - Promise.reject
@@ -165,5 +165,54 @@ function Promise(executor) {
   }
   executor(resolve, reject)
 }
+```
+then 方法可以接收两个函数作为参数
+```
+Promise.prototype.then(onFilfulled,onRejected) {
+
+}
+```
+因为then为异步执行，这里使用两个成员变量，分别存储成功所有的成功(onFilFulledCallbacks)和所有的失败(onRejectedCallbacks), 当构造Promise为resolved状态时，成功函数执行，当Promise为rejected时，失败函数开始执行,
+```
+function Promise(executor) {
+  let that = this;
+  that.status = 'pending';
+  // 声明成功函数的存储空间
+  that.onFilFulledCallbacks = [];
+  // 声明失败函数的存储空间
+  that.onRejectedCallbacks = [];
+  function resolve() {
+    if(that.status === 'pending'){
+      that.status = 'resolved';
+      that.onFilFulledCallbacks.forEach((fn)=>{
+          fn();
+      });
+    }
+  }
+  function reject() {
+    that.status = 'rejected';
+      if(that.status === 'pending'){
+          that.status = 'rejected';
+          that.onRejectedCallbacks.forEach((fn)=>{
+              fn();
+          });
+      }
+  }
+  executor(resolve, reject)
+}
+
+Promise.prototype.then(onFilfulled,onRejected) {
+  var that = this;
+  if (that.status === 'pending') {
+    
+  }
+  if () {
+
+  }
+  if () {
+
+  }
+}
+
 ```
 
