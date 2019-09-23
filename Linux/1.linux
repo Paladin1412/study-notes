@@ -150,4 +150,24 @@ find . -name a.t[xyz]t // 枚举值
 find . -iname a.tXT // 忽略大小写
 find . -user root // 通过所有者
 find . -user root // 通过所有者
+
+find . -size 10k // 等于10k
+find . -size +10k // 大于10k
+find . -size -10k // 小于10k
 ```
+### 管道符
+cat a.txt | grep one // 过滤包含one的那一行, 查找出包含one的那一行
+cat a.txt | grep -v one // 除了one的
+cat a.txt | grep -i one // 不区分大小写
+
+### man 帮助命令
+man ls
+man cd
+
+### 关机和重启
+shutdown -r 22:00 // 22点重启
+shutdown -h 22:00 // 22点关机
+shutdown -c // 取消前一个关机
+
+### w
+查看当前的登录用户
