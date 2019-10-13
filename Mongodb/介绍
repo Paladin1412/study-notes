@@ -97,7 +97,6 @@ class Mongodb {
 
 module.exports = new Mongodb(conf);
 ```
-
 使用Mongodb
 ```
 const mongod = require('./db');
