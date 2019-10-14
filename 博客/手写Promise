@@ -74,8 +74,10 @@ Promise.all([promise1, promise2, promise3]).then(function(values) {
 });
 // [3, 42, "foo"]
 ```
+
 - Promise.race
 接收多个promise实例组成的数组为参数，只要有一个实例执行完毕之后立即返回一个promise对象。then方法得到该promise实例执行完毕的返回值
+
 ```
 var promise1 = new Promise(function(resolve, reject) {
     setTimeout(resolve, 500, 'one');
@@ -149,6 +151,7 @@ function Promise(executor) {
 ```
 Promise有三种状态，1、pending(等待)，2、resolved(成功)，3、rejected(失败)，默认为pendding，当构造函数中的resolve方法被执行，Promise置为resolved,当构造函数中的reject方法被执行，Promise置为rejected,
 resolved 和 rejected只能存在一种，所以只有当状态为pending的时候才会改变
+```
 function Promise(executor) {
   let that = this;
   that.status = 'pending';
@@ -168,9 +171,11 @@ function Promise(executor) {
 ```
 then 方法可以接收两个函数作为参数
 ```
+
 Promise.prototype.then(onFilfulled,onRejected) {
 
 }
+
 ```
 因为then为异步执行，这里使用两个成员变量，分别存储成功所有的成功(onFilFulledCallbacks)和所有的失败(onRejectedCallbacks), 当构造Promise为resolved状态时，成功函数执行，当Promise为rejected时，失败函数开始执行,
 ```
@@ -184,6 +189,7 @@ function Promise(executor) {
   function resolve() {
     if(that.status === 'pending'){
       that.status = 'resolved';
+      // 执行成功函数
       that.onFilFulledCallbacks.forEach((fn)=>{
           fn();
       });
@@ -193,6 +199,68 @@ function Promise(executor) {
     that.status = 'rejected';
       if(that.status === 'pending'){
           that.status = 'rejected';
+          // 执行失败的函数
+          that.onRejectedCallbacks.forEach((fn)=>{
+              fn();
+          });
+      }
+  }
+  executor(resolve, reject)
+}
+
+
+Promise.prototype.then(onFilfulled,onRejected) {
+  var that = this;
+  if (that.status === 'pending') {
+    that.onFilFulledCallbacks.push(onFilfulled);
+    that.onRejectedCallbacks.push(onRejected);
+  }
+  if (this.status === 'resolved') {
+    onFilfulled();
+  }
+  if (that.status === 'rejected') {
+    onRejected();
+  }
+}
+
+```
+
+由于Promise构造函数中，resolve，和reject的执行结果会传递给then中的回调，如下:
+```
+const p = new Promise(function(resolve, reject) {
+  resolve('传入一个值');
+})
+p.then(function(value) {
+  console.log(value); // 传入一个值
+})
+```
+所以我们在构造函数中定义一个value来接收resolve或reject的值，然后再then中执行onFilfulled或onRejected时返回
+```
+
+function Promise(executor) {
+  let that = this;
+  that.status = 'pending';
+  that.value = null;
+  // 声明成功函数的存储空间
+  that.onFilFulledCallbacks = [];
+  // 声明失败函数的存储空间
+  that.onRejectedCallbacks = [];
+  function resolve(value) {
+    if(that.status === 'pending'){
+      that.status = 'resolved';
+      that.value = value;
+      // 执行成功函数
+      that.onFilFulledCallbacks.forEach((fn)=>{
+          fn();
+      });
+    }
+  }
+  function reject(value) {
+    that.status = 'rejected';
+      if(that.status === 'pending'){
+          that.status = 'rejected';
+          that.value = value;
+          // 执行失败的函数
           that.onRejectedCallbacks.forEach((fn)=>{
               fn();
           });
@@ -204,15 +272,156 @@ function Promise(executor) {
 Promise.prototype.then(onFilfulled,onRejected) {
   var that = this;
   if (that.status === 'pending') {
-    
+    that.onFilFulledCallbacks.push(function() {
+      onFilfulled(that.value); // 执行时返回
+    });
+    that.onRejectedCallbacks.push(function() {
+      onRejected(that.value);  // 执行时返回
+    });
   }
-  if () {
-
+  if (this.status === 'resolved') {
+    onFilfulled(that.value); // 执行时返回
   }
-  if () {
-
+  if (that.status === 'rejected') {
+    onRejected(that.value); // 执行时返回
   }
 }
 
 ```
+
+由于promise实例可以链式书写多个then方法，所以then中应该返回一个新的promise
+```
+Promise.prototype.then(onFilfulled,onRejected) {
+  var that = this;
+  // 返回promise
+  return new Promise(function(resolve, reject) {
+    if (that.status === 'pending') {
+      that.onFilFulledCallbacks.push(function() {
+        onFilfulled(that.value);
+      });
+      that.onRejectedCallbacks.push(function() {
+        onRejected(that.value);
+      });
+    }
+    if (this.status === 'resolved') {
+      onFilfulled(that.value);
+    }
+    if (that.status === 'rejected') {
+      onRejected(that.value);
+    }
+  });
+}
+
+```
+
+如果Promise执行中，出现错误则执行reject，这里引入try catch
+
+```
+function Promise(executor) {
+  try{
+    executor(resolve,reject);
+  }catch(e){
+    reject(e);
+  }
+}
+
+```
+
+
+多个then链式调用时，前一个then中返回的值会传入到后一个then中，需要判断then中返回的值类型
+```
+// 判断then返回值的关系类型, promise2, 为 then中返回的promise，promise3为then中回调函数的执行结果，resolve，reject为Promise的resolve，reject；
+function resolvePromiseRelation(promise2,promise3,resolve,reject){
+
+}
+```
+
+改造then方法
+```
+Promise.prototype.then(onFilfulled,onRejected) {
+  // 如果onFilfulled或onRejected不存在，添加默认函数
+  onFilfulled = typeof onFilfulled === 'function'? onFilfulled : function(value) { return value; };
+  onRejected = typeof onRejected === 'function'?onRejected : function(err) { throw err; };
+  var that = this;
+  // 返回promise
+  const promise2 = new Promise(function(resolve, reject) {
+    if (this.status === 'resolved') {
+      const promise3 = onFilfulled(that.value);
+      resolvePromiseRelation(promise2,promise3,resolve,reject);
+    }
+    if (that.status === 'rejected') {
+      const promise3 = onRejected(that.value);
+      resolvePromiseRelation(promise2,promise3,resolve,reject);
+    }
+    if (that.status === 'pending') {
+      that.onFilFulledCallbacks.push(function() {
+        let promise3 = onFilfulled(that.value);
+        resolvePromiseRelation(promise2,promise3,resolve,reject);
+      });
+      that.onRejectedCallbacks.push(function() {
+        let promise3 = onRejected(that.reason);
+        resolvePromiseRelation(promise2,promise3,resolve,reject);
+      });
+    }
+  });
+  return promise2;
+}
+```
+
+因为promise2的使用在自己的创建中，所以我们引入定时器，异步获取promise2
+
+```
+Promise.prototype.then = function(onFilfulled,onRejected){
+    onFilfulled = typeof onFilfulled === 'function'?onFilfulled:value=>value;
+    onRejected = typeof onRejected === 'function'?onRejected:err=>{throw err};
+    let that = this;
+    let promise2 = new Promise((resolve,reject)=>{
+        if(that.status === 'resolved'){
+            setTimeout(()=>{
+                try{
+                    let promise3 = onFilfulled(that.value);
+                    resolvePromiseRelation(promise2,promise3,resolve,reject);
+                }catch(e){
+                    reject(e);
+                }
+            },0);
+        }
+        if(that.status === 'rejected'){
+            setTimeout(()=>{
+                try{
+                    let promise3 = onRejected(that.reason);
+                    resolvePromiseRelation(promise2,promise3,resolve,reject);
+                }catch(e){
+                    reject(e);
+                }
+            },0);
+        }
+        if(that.status === 'pending'){
+            that.onFilFulledCallbacks.push(function(){
+                setTimeout(()=>{
+                    try{
+                        let promise3 = onFilfulled(that.value);
+                        resolvePromiseRelation(promise2,promise3,resolve,reject);
+                    }catch(e){
+                        reject(e);
+                    }
+                },0);
+            });
+            that.onRejectedCallbacks.push(function(){
+                setTimeout(()=>{
+                   try{
+                       let promise3 = onRejected(that.reason);
+                       resolvePromiseRelation(promise2,promise3,resolve,reject);
+                   }catch(e){
+                       reject(e);
+                   }
+               },0);
+           });
+        }
+    });
+    return promise2;
+}
+
+```
+
 
