@@ -424,4 +424,374 @@ Promise.prototype.then = function(onFilfulled,onRejected){
 
 ```
 
+梳理resolvePromiseRelation函数中promise2和promise3的关系
+```
+function resolvePromiseRelation(promise2,promise3,resolve,reject){
+    // 判断是否循环引用
+    if(promise2 === promise3){
+        return reject(new TypeError('循环引用了!'));
+    }
+    // 表示当前有没有被调用过，预防与其它人写的promise混合使用时，对方的resolve和reject都被调用，用变量限制。
+    let called;
+    // 如果promise3是一个对象, 则需要判断promise3是不是一个promise，如果是，继续判断，如果不是，代表promise3是一个基本类型，直接resolve即可
+    if(promise3 !==null && (typeof promise3 === 'object' || typeof promise3 === 'function')) {
+        try{
+            // 取出promise3的then方法。
+            let then = promise3.then;
+            if(typeof then === 'function'){
+                // 执行then方法获取到返回值，再次判断两个promise的关系，递归
+                then.call(promise3, (promise4)=>{
+                    if(called) return;
+                    called = true;
+                    resolvePromiseRelation(promise2,promise4,resolve,reject);
+                },(r)=>{
+                    if(called) return;
+                    called = true;
+                    reject(r);
+                });
+            }else{
+                resolve(promise3);
+            }
+        }catch(e){
+            if(called) return;
+            called = true;
+            reject(e);
+        };
+    } else {
+        resolve(promise3);
+    }
+}
+```
+
+### 至此promise基本功能已经完成，代码如下
+
+```
+function Promise(executor){
+    let that = this;
+    that.status = 'pending';
+    that.value = null;
+    that.reason = null;
+    that.onFilFulledCallbacks = [];
+    that.onRejectedCallbacks = [];
+
+    function resolve(value){
+        if(that.status === 'pending'){
+            that.status = 'resolved';
+            that.value = value;
+            that.onFilFulledCallbacks.forEach((fn)=>{
+                fn();
+            });
+        }
+    }
+    function reject(reason){
+        if(that.status === 'pending'){
+            that.status = 'rejected';
+            that.reason = reason;
+            that.onRejectedCallbacks.forEach((fn)=>{
+                fn();
+            });
+        }
+    }
+    try{
+        executor(resolve,reject);
+    }catch(e){
+        reject(e);
+    }
+}
+
+Promise.prototype.then = function(onFilfulled,onRejected){
+    onFilfulled = typeof onFilfulled === 'function'?onFilfulled:value=>value;
+    onRejected = typeof onRejected === 'function'?onRejected:err=>{throw err};
+    let that = this;
+    let promise2 = new Promise((resolve,reject)=>{
+        if(that.status === 'resolved'){
+            setTimeout(()=>{
+                try{
+                    let promise3 = onFilfulled(that.value);
+                    resolvePromiseRelation(promise2,promise3,resolve,reject);
+                }catch(e){
+                    reject(e);
+                }
+            },0);
+        }
+        if(that.status === 'rejected'){
+            setTimeout(()=>{
+                try{
+                    let promise3 = onRejected(that.reason);
+                    resolvePromiseRelation(promise2,promise3,resolve,reject);
+                }catch(e){
+                    reject(e);
+                }
+            },0);
+        }
+        if(that.status === 'pending'){
+            that.onFilFulledCallbacks.push(function(){
+                setTimeout(()=>{
+                    try{
+                        let promise3 = onFilfulled(that.value);
+                        resolvePromiseRelation(promise2,promise3,resolve,reject);
+                    }catch(e){
+                        reject(e);
+                    }
+                },0);
+            });
+            that.onRejectedCallbacks.push(function(){
+                setTimeout(()=>{
+                   try{
+                       let promise3 = onRejected(that.reason);
+                       resolvePromiseRelation(promise2,promise3,resolve,reject);
+                   }catch(e){
+                       reject(e);
+                   }
+               },0);
+           });
+        }
+    });
+    return promise2;
+}
+
+function resolvePromiseRelation(promise2,promise3,resolve,reject){
+    if(promise2 == promise3){
+        return reject(new TypeError('循环引用了!'));
+    }
+    let called;
+    if(promise3!==null&&(typeof promise3 === 'object' || typeof promise3 === 'function')){
+        try{
+            let then = promise3.then;
+            if(typeof then === 'function'){
+                then.call(promise3, (promise4)=>{
+                    if(called) return;
+                    called = true;
+                    resolvePromiseRelation(promise2,promise4,resolve,reject);
+                },(r)=>{
+                    if(called) return;
+                    called = true;
+                    reject(r);
+                });
+            }else{
+                resolve(promise3);
+            }
+        }catch(e){
+            if(called) return;
+            called = true;
+            reject(e);
+        };
+    }else{
+        resolve(promise3);
+    }
+}
+
+Promise.prototype.catch = function(errFn){
+    return this.then(null,errFn);
+}
+Promise.prototype.finally = function(fn){
+    this.then(()=>{
+        fn();
+    },()=>{
+        fn();
+    });
+    return this;
+}
+
+```
+
+### Promise静态方法
+- Promise.all: 传入一个任意类型的数组，当所有Promise执行完成后统一返回，返回值为一个Promise，then后获得所有执行结果的数组
+```
+// 使用
+const a = new Promise(function(resolve) {
+  resolve('第一个')
+});
+const b = new Promise(function(resolve) {
+  resolve('第二个')
+});
+Promise.all([a, b]).then(function(values) {
+  console.log(values); // ['第一个', '第二个']
+})
+```
+代码实现
+```
+Promise.all = function(values){ // 传入一个promise的数组
+    // 返回一个promise对象
+    return new Promise((resolve,reject)=>{
+        // 存储每个参数promise对象的执行结果
+        let results = [];
+        // 记录promise执行完成的个数
+        let index = 0;
+        // 定义函数，处理promise执行结果，放入results中，并让index累加
+        function addToArr(key,value){
+            index++;
+            results[key] = value;
+            // 当index等于传入promise的个数时，表示所有执行完成，运行返回的Promise对象的resolve
+            if(index === values.length){
+                resolve(results);
+            }
+        }
+
+        for(let i = 0; i < values.length; i++){
+            let current = values[i];
+            // 如果传入的是promise对象
+            if(current && current.then && typeof current.then === 'function'){
+                current.then((value)=>{
+                    addToArr(i,value);
+                },reject);
+            }else{ // 否则传入的是普通对象
+                addToArr(i,current);
+            }
+        }
+    });
+}
+```
+- Promise.race：与all方法区别为，当任意一个执行完成，就会返回
+
+代码实现如下
+```
+Promise.race = function(values){
+    return new Promise((resolve,reject)=>{
+        for(let i = 0; i < values.length; i++){ // 循环判断传入的values
+            let current = values[i];
+            if(current&&current.then&&typeof current.then === 'function'){ // 如果是promise对象，则替换promise的resolve和reject
+                current.then(resolve,reject);
+            }else{ // 基本类型直接返回
+                resolve(current);
+            }
+        }
+    });
+}
+
+```
+
+- Promise.resolve: 直接返回成功状态
+```
+Promise.resolve('成功').then(function(value) {
+  console.log(value);
+})
+// 成功
+```
+代码实现
+```
+Promise.resolve = function(value){
+    return new Promise((resolve,reject)=>{
+        resolve(value);
+    });
+}
+```
+
+- Promise.reject: 直接返回失败状态
+```
+Promise.reject('失败').then(function(value) {
+  console.log(value); // 不执行
+}, function(err) {
+  console.log(err); // 执行
+})
+// 失败
+```
+代码实现
+```
+Promise.reject = function(reason){
+    return new Promise((resolve,reject)=>{
+        reject(reason);
+    });
+}
+```
+- Promise.defer,  Promise.deferred ： 包装类
+
+```
+Promise.defer = Promise.deferred = function(){
+    let dfd = {};
+    dfd.promise = new Promise((resolve, reject)=>{
+        dfd.resolve = resolve;
+        dfd.reject = reject;
+    });
+    return dfd;
+}
+```
+至此，Promise已经完成，下面为扩展部分
+
+## 扩展部分
+
+### bluebird
+蓝鸟， promise的库，在node中使用，实现将异步方法变为同步
+```
+npm install bluebird;
+```
+
+```
+const fs = require('fs');
+const bluebird = require('bluebird');
+// 将异步方法变为同步，将回调函数改为then调用
+const readFile = bluebird.promisify(fs.readFile);
+// 可以实现如下使用方式
+Promise.all([readFile('./name1.txt'), readFile('./name2.txt')]);
+```
+
+实现原理
+```
+function promisify(fn) { // node中的util模块自带了这个功能
+    return function(...args) { // 返回值是一个函数
+        return new Promise(function(resolve, reject) { // 返回一个promise
+            fn(...args, function(err, data) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(data);
+                }
+            });
+        })
+    }
+}
+```
+
+### node中的mz模块
+mz中的fs模块完全是封装好的promisify方法
+```
+// npm install mz;
+const fs = require('mz/fs');
+Promise.all([fs.readFile('./name1.txt'), fs.readFile('./name2.txt')]);
+```
+
+### 总结
+- promise的三个状态 怎么互相转化的，等待转为成功
+- promise异步的特点，发布订阅模式
+- 当前成功的回调 和 失败的回调 必须不能再当前上下文中执行 Promise.then(); 异步线程
+- then方法 必须返回一个新的promise
+- resolvePromise 判断then中函数的返回结果
+- Promise all race resolve reject
+- promisify bluebird mz
+
+### generator
+生成器 生成迭代器
+```
+function fns() {
+    const obj = {0: 1, 1: 2, 2: 3, [Symbol.iterator]: function() {
+        let index = 0;
+        const self = this;
+        return {
+            next() {
+                return { value: self[index], done: index++ === self.length };
+            }
+        }
+    }}
+}
+
+function * read() { // generator函数， 返回一个迭代器
+    return 100;
+}
+const r = read();
+console.log(r.next()); // { value: 100, done: true }
+
+```
+一般generator会配合yield使用
+```
+function * read() {
+    yield 1;
+    yield 2;
+    return 100;
+}
+const it = read();
+console.log(it.next()); // { value: 1, done: false }
+console.log(it.next()); // { value: 2, done: false }
+console.log(it.next()); // { value: 100, done: true }
+```
+
 

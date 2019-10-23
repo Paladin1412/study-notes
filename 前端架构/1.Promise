@@ -301,10 +301,11 @@ promise2.then((data) => {
 ```
 ### 值的穿透
 ```
+
 let p = new Promise(function(reslove, reject) {
     resolve("哈哈哈");
 })
-p.then().then().then((data) => { // 如果then的函数没有传，则会想后传递
+p.then().then().then((data) => { // 多个then方法连接时如果then的函数没有传，则会想后传递
     console.log(data);
 })
 ```
