@@ -6,7 +6,7 @@
 - npm 使用
 
 ### 浏览器的事件循环
-js主线程单线程的，ajax setTimeout 在浏览器中会躲开线程
+js主线程单线程的，ajax setTimeout 在浏览器中会多开线程
 代码从上到下执行 会先执行同步代码，在执行异步
 - 宏任务mac(慢) setTimeout，微任务mic(快) promise.then  宏任务和微任务都是指代异步任务
 
