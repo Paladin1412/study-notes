@@ -1,0 +1,45 @@
+### 查询nginx执行状态
+
+```status.conf
+server {
+    location = /status {
+        stub_status on;
+    }
+}
+nginx -s reload
+http://127.0.0.1/status
+```
+
+history 查询历史命令
+!序号
+
+### 随机主页
+- with-http_random_index_module 在根目录里随机选择一个主页显示
+```
+# Syntax: random_index on/off;
+# Default: off
+# Context: location
+
+/etc/nginx/conf.d/default.conf
+
+location / {
+    root /opt/app;
+    random_index on;
+}
+
+```
+
+### 内容替换，输出文本替换
+```/etc/nginx/conf.d/default.conf
+location / {
+    root /usr/share/nginx/html;
+    index index.html index.htm;
+    sub_filter '原字符串' '新字符串';
+    sub_filter_once off; # 全部替换
+}
+
+```
+
+### 请求限制
+- 限制连接数
+- 限制请求数

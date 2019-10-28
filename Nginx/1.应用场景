@@ -131,5 +131,38 @@ http {
     include /etc/nginx/conf.d/*.conf; 包含其他配置文件
 }
 
+```
+server { // 每个server 对应一个网站
+    listen 80; 监听的端口号
+    server_name localhost 192.168.20.129;  域名，多个用空格隔开
+    # charset koi8-r; 指定字符集
+    # access_log /var/log/nginx/host.access.log main; 指定访问日志的位置和格式
+    location / { 匹配所有的路径
+        root /usr/share/nginx/html; 静态文件根目录
+        index index.html index.htm; 索引文件
+    }
+    # error_page 404 /404.html; 错误页面重定向
+    # redirect server error pages to the statiic page /50x.html 把服务器错误状态码重定向到50x.html
+    errpr_page 500 502 503 504 /50x.html; 当路径是/50.html的话，根目录是/usr/share/nginx/html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
+    }
+    # proxy the PHP scripts to Apache listening on 127.0.0.1:80 如果访问的文件名是.php的话，会把此请求转发给127.0.0.1
+    # location ~ \.php$ {
+        proxy_pass http://127.0.0.1;
+    }
+    # pass the PHP scripts to FastCGT server listening on 127.0.0.1:9000 如果访问的文件名是.php的话，会把此请求转发给127.0.0.1:9000
+    # location ~ \.php$ {
+        fastcgi_pass http://127.0.0.1:9000;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME /scripts$fastcgi_script_name;
+        include fastcgi_params;
+    }
+}
+```
 
+nginx - s reload === systemctl reload nginx.server : 重启命令
 
+### 多级代理
+1. 通过参数传入
+2. http_x_forwarded_for = 客户端ip，代理服务器1ip,代理服务2ip
