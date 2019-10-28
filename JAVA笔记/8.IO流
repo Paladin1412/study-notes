@@ -222,3 +222,82 @@ public class Copy {
 ```
 
 IO转换流
+
+ANSIC: 编码，本机默认utf-8
+字符转字节
+java.io.OutputStreamWrite, 集成write类
+就是一个字符输出流，写文本文件
+write()： 字符，字符数组，字符串
+字节流桐乡字符流的桥梁，可以将字节流转字符流
+在GBK中，汉子两个字节，在UTF-8中，可操作码表
+转换流改变编码表，将字符转换为字节
+构造器：
+参数(OutputStream out) 接收所有的字节输出流
+OutputStreamWrite(OutputStreamWrite, charsetName); 两个参数
+第二个参数是编码表的名字，GBK,在GBK中，汉子两个字节，在UTF-8,不区分大小写
+
+```java
+FileOutputStream fos = new FileOutputStream("c:\\a.txt");
+```
+如果用GBK编码，可以不写表名，最好写
+osw.write("你好");
+osw.close();
+osw.write方法将字符串传给OutputStreamWrite转换编码表查询出字节，然后操作FileInputStream的write方法，写入到文件，字符流向字节的桥梁
+FileWrite类: 不能更改码表，取系统自带码表
+字节转字符的流程:读取过程
+InputStreamReader: 字节流向字符的桥梁
+使用FileInputStream读取文件
+InputStreamReader 会使用FileInputStream使之返回对应的字节数
+读取的方法:
+read(): 读取一个字符，读取字符数组
+技巧: OutputStreamWriter写了文件
+InputStreamReader 读取文件
+OutputStreamWrite(OutputStream out) 所有字节输出流
+InputStreamReader(InputStream in) 接收所有字节输入流
+字节输入流 FileInputStream("");
+子类:
+FileReader(); FileWriter() 不能传编码码表，必须是系统默认编码表，编码表要和文件编码一直
+
+### 流对象的效率问题
+缓冲流，提效
+BufferedInputStream
+BufferedOutputStream
+BufferedReader
+BufferredWriter
+
+```
+BufferedOutputStream(OutputStream out); 可传递任意字符输出流，传递的是哪个字节流，就对哪个字节流提高效率
+```
+BufferedInputStream
+read(): 单个字节，数组
+len = bis.read(bytes); new String(bytes, 0, len);
+
+效率如下
+字节流 单个  125250ms
+字节流数组    192ms
+字节缓冲区单个  1210ms
+字节缓冲区数组  73ms
+
+BufferedWriter(writer w)
+write: 子类： FileWriter, OutputStreamWrite
+
+str.toCharArray(); 指字符串变字符数组
+字符流要刷新，否则到达不了目的地
+bfw.flush();
+write - flush - write - flush - close
+BufferedWrite 特有方法，void newLine(); 写换行
+bfw.newLine(); 推荐使用，平台无关性
+FileInputStream.write(byte[]); 写入字符接数组，会自动调用flush
+FileInputStream.write(byte b); 写入单个字节，不调用flush，需手动调用
+
+Java.io.Reader
+
+子类： LineNumberReader
+
+public class BufferedReader 从字符输入流中读取文件，缓冲各个字符，从而实现字符数组和换行的搞笑读取
+read();
+read(char[]);
+readLine(); 读取一个文本行，返回字符串
+通过\n 或 \r 判断是否到行尾，读取不到返回null；
+
+### 字符输入流的缓冲包流
