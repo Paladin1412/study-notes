@@ -112,3 +112,58 @@ cat id_dsa.pub >> ~/.ssh/authorized_keys
 第三方返回验证结果
 浏览器向服务器发送用公钥加密的对称密钥
 服务器通过对称密钥和浏览器进行通信
+
+证书过程
+1. server端通过加密算法生成一对密钥，把公钥发给CA，申请数字证书
+2. CA 审核后，生成数字证书，并发回给Server端
+3. TCP三次握手
+4. 客户端发送给服务器http报文请求并协商使用哪种加密算法
+5. 服务器响应报文并把自身的数字签名发给客户端
+6. 客户端下载CA的公钥验证Server的身份
+7. 客户端获得Server的公钥，生成一个随机对称密钥，用该密钥加密要发送的URL链接申请，再用Server端的公钥加密密钥
+8. 客户端发送加密的密钥和加密的URL链接申请
+9. 服务器使用自身的私钥解密，获得一个对称密钥，再用该对称密钥解密经过加密的URL链接，获得URL链接申请
+10. 服务器根据URL链接申请获得网页，并用客户端发来的对称密钥把该网页加密后发给客户端
+11. 用自身对称密钥解密，获得网页内容
+12. TCP四次挥手
+
+证书分类
+入门级DVSSL- 域名有效，无门槛
+企业级OVSSL- 企业资质，个人认证
+增强型EVSSL- 浏览器给予绿色地址栏显示公司名称
+
+### 配置证书
+阿里云 - ssl证书 - 下载
+一般选择赛门铁克证书
+
+server {
+    listen 443;
+    server_name localhost;
+    ssl on;
+    root html;
+    index index.html index.htm;
+    ssl_certificate 证书的值
+    ssl_certificate_key 证书的公钥
+    ssl_session_timeout 5m;
+    ssl_siphers
+}
+
+### helmet 中间件
+增强安全性。添加请求头
+```
+npm i koa-helmet -s;
+
+const Koa = require('koa');
+const helmet = require('koa-helmet');
+const app = new Koa();
+app.use(helmet());
+app.use((ctx) => {
+    ctx.body = "hello word";
+});
+app.listen(8080);
+```
+Strict-Transport-Security: 强制使用安全连接(SSL/TLS之上的HTTPS)来连接到服务器
+X-Frame-Optons: 提供对于点击劫持的保护
+X-XSS-Protection: 开启大多现代浏览器内建的对于跨站脚本攻击XSS的过滤功能
+X-Content-Type-Options: 防止浏览器使用MIME-sniffing来确定响应的类型，转而使用明确的content-type来确定
+Content-Security-Policy: 防止受到跨站脚本攻击以及其他跨站注入攻击

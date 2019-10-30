@@ -1,0 +1,8 @@
+### webpack
+webpack-cli 工具
+npx 是webpack带的命令工具，使用npx运行webpack会使用项目node_module中的webpack
+```
+npx webpack -v
+npx webpack index.js // 打包
+```
+webpack 默认只认识js模块，而且只支持模块语法。
