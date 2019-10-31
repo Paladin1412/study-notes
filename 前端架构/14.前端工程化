@@ -80,8 +80,105 @@ options: {
 
 ```
 
-### Loader
+### Loader编写
+官网loaders中存放loader的api
 ```
 npm init -y;
 npm install webpack webpack-cli -D;
 ```
+webpack 配置
+```
+const path = require('path');
+module.exports = {
+    mode: "development",
+    entry: "./index.js",
+    module: {
+        rules: {
+            test: /\.js$/,
+            use: path.resolve(__dirname, "./loaders/replaceLoader.js")
+        }
+    },
+    output: {
+        path: path.resolve(__dirname, "dist")
+    }
+}
+```
+
+replaceLoader.js
+```
+module.exports = function(source) { // 不能用剪头函数，否则拿不到上下文的this
+    console.log(this, source); // 输出的就是entry中的js的源码
+    return source.replace(/aaa/, 'bbb');
+}
+```
+插件接收的参数:
+
+```
+module.exports = function(source) {
+    console.log(this.query); // 为传入的参数
+    return source;
+}
+```
+
+loader-utils; 官方推荐处理loader.query的工具
+```
+const loaderUtils = require('loader-utils');
+module.exports = function(source) {
+    const options = loaderUtils.getOptions(this);
+    console.log(options);
+    return source;
+}
+```
+
+this.callback：返回更多内容, 替代return
+
+```
+module.exports = function(source) {
+    const options = loaderUtils.getOptions(this);
+    const result = "2123";
+    this.callback(null, result);
+}
+```
+
+this.async: 处理异步
+```
+module.exports = function(source) {
+    const options = loaderUtils.getOptions(this);
+    // 定义异步callback
+    const callback = this.async();
+    setTimeout(() => {
+        const result = "2123";
+        callback(null, result);
+    });
+}
+```
+
+resolveLoader: webpack配置loader简写
+
+```
+resolveLoader: {
+    modules: ["node_modules", "./loaders"], // 当配置文件里面使用模块，先去node_modules里面找，如果找不到就去后面路径上面找
+}
+```
+
+### Plugins编写
+plugin开始打包，在某个时候，帮助我们吃力一些什么事情的机制
+pubgin要比loader稍微复杂一些，在webpack的源码中，用plugin的机制还是占有非常大的场景，可以说plugin是webpack的灵魂
+设计模式:
+- 事件驱动
+- 发布订阅
+plugin是一个类，里面包含一个apply函数，接受一个参数，complier
+
+代码如下
+```
+class CopyRightWebpackPlugin {
+    constructor(options) {
+        console.log(options);
+    }
+    apply(complier) {
+        console.log(complier);
+    }
+}
+module.exports = CopyRightWebpackPlugin;
+```
+45分钟
