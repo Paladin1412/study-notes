@@ -167,7 +167,7 @@ pubgin要比loader稍微复杂一些，在webpack的源码中，用plugin的机�
 设计模式:
 - 事件驱动
 - 发布订阅
-plugin是一个类，里面包含一个apply函数，接受一个参数，complier
+plugin是一个类，里面包含一个apply函数，接受一个参数，compiler
 
 代码如下
 ```
@@ -175,10 +175,49 @@ class CopyRightWebpackPlugin {
     constructor(options) {
         console.log(options);
     }
-    apply(complier) {
-        console.log(complier);
+    apply(compiler) {
+        // console.log(compiler);
+        compiler.hooks.emit.tapAsync('CopyRightWebpackPlugin', (complilation, cb) => {
+            // assets 资源文件
+            complilation.assets["copyright.txt"] = {
+                source: function() { // 文件内容
+                    return "hello copyright";
+                },
+                size: function() { // 文件大小
+                    return 30;
+                }
+            };
+            cb();
+        });
+        compiler.hooks.compile.tab('CopyRightWebpackPlugin', (complilation) => {
+            console.log("同步方法");
+        })
     }
 }
 module.exports = CopyRightWebpackPlugin;
 ```
-45分钟
+hooks
+生命周期
+- emit
+异步方法，接收两个参数，第一个参数是类名字符串，第二个参数是个回调，回调中接收两个参数
+
+### node调试工具
+```
+"script": {
+    "debug": "node --inspect --inspect-brk node_modules/webpack/bin/webpack.js"
+}
+```
+
+### webpack 打包原理分析
+
+```bundile.js
+
+const fs = require('fs');
+const fenximokuai = function(entry) { // 接收一个入口文件
+    const content = fs.readFileSync(entry, 'utf-8');
+    console.log(content);
+}
+
+fenximokuai("./src/index.js");
+
+```
