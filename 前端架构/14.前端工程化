@@ -221,3 +221,55 @@ const fenximokuai = function(entry) { // 接收一个入口文件
 fenximokuai("./src/index.js");
 
 ```
+需要拿到文件中的依赖模块，这里我们不推荐使用字符串截取，引入的模块名越多，就越麻烦，不灵活，这里我们推荐使用@babel/parser, 这是babel7的工具，来帮助我们分析内部的语法，包括es6，返回一个ast抽象语法树
+
+```
+npm install @bable/parser  --save
+
+const fs = require('fs');
+const parser = require('@babel/parser');
+
+const fenximokuai = filename => {
+    const content = fs.readFileSync(filename, 'utf-8');
+    const Ast = parser.parse(content, {
+        sourceType: "module"
+    });
+    console.log(Ast.pargram.body);
+}
+
+fenximokuai('./index.js');
+```
+
+接下来我们可以根据body里面的分析结果，遍历出所有的引入模块，但是比较麻烦，这里还是推荐babel推荐的一个模块@babel/traverse，来帮我们处理
+```
+const fs = require('fs');
+const path = require('path');
+const traverse = require("@babel/traverse").default;
+const parser = require('@babel/parser');
+
+const fenximokuai = filename => {
+    const content = fs.readFileSync(filename, 'utf-8');
+    const Ast = parser.parse(content, {
+        sourceType: "module"
+    });
+    const dependencies = {};
+    traverse(Ast, {
+        ImportDeclaration({node}) {
+            const newfile = './' + path.join(path.dirname(filename), node.source.value);
+            // dependencies.push(node.source.value);
+            dependencies[node.source.value] = newfile;
+        }
+    });
+    console.log(dependencies);
+}
+
+fenximokuai('./index.js');
+```
+把代码处理成浏览器可运行的代码，需要借助@babel/core, 和@babel/preset-env, 把ast语法树转换成合适的代码
+
+```
+const babel = rquire('@babel/core');
+const {node } = babel.transformFromAst(Ast, null, {
+    presets: ['@babel/preset-env']
+})
+```
