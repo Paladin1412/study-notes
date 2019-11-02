@@ -269,7 +269,100 @@ fenximokuai('./index.js');
 
 ```
 const babel = rquire('@babel/core');
-const {node } = babel.transformFromAst(Ast, null, {
+const { code } = babel.transformFromAst(Ast, null, {
     presets: ['@babel/preset-env']
-})
+});
+return {
+    entry,
+    dependencies,
+    code
+}
+
 ```
+
+分析模块
+```
+const fs = require('fs');
+const path = require('path');
+const traverse = require("@babel/traverse").default;
+const parser = require('@babel/parser');
+const babel = rquire('@babel/core');
+
+const fenximokuai = filename => {
+    const content = fs.readFileSync(filename, 'utf-8');
+    const Ast = parser.parse(content, {
+        sourceType: "module"
+    });
+    const dependencies = {};
+    traverse(Ast, {
+        ImportDeclaration({node}) {
+            const newfile = './' + path.join(path.dirname(filename), node.source.value);
+            // dependencies.push(node.source.value);
+            dependencies[node.source.value] = newfile;
+        }
+    });
+    
+    const { code } = babel.transformFromAst(Ast, null, {
+        presets: ['@babel/preset-env']
+    });
+    return {
+        filename,
+        dependencies,
+        code
+    }
+}
+
+const info = fenximokuai('./index.js');
+
+```
+
+把项目中的所有依赖都分析出来
+```
+const fenxisuoyoumokuai(filename) {
+    const entryModule = fenximokuai(filename);
+    // 使用队列存储所有
+    const yilaiArr = [entryModule];
+    for (let i = 0; i < yilaiArr.length; i++) {
+        const item = yilaiArr[i];
+        const { dependencies } = item;
+        if (dependencies) {
+            for (ket k in dependencies) {
+                yilaiArr.push(fenximokuai(dependencies[j]));
+            }
+        }
+    }
+    const obj = {};
+    yilaiArr.forEach(item => {
+        obj[item.filename] = {
+            dependencies: item.dependencies,
+            code: item.code
+        }
+    })
+    return obj;
+}
+```
+
+// 定义一个闭包
+```
+const genCode = function(filename) {
+    consyt bundleInfo = JSON.stringfiy(fenxisuoyoumokuai(filename));
+    return `
+        (function(all)) {
+            function require(module) {
+                function localPath(path) {
+                    return require(all[module].dependencies[path]);
+                }
+                const exports = {};
+                (function(require, code){
+                    eval(code);
+                })(localPath, exports, all[module].code);
+                return exports;
+            }
+            // 需要用字符串包裹一下参数
+            require('${filename}');
+        })(${bundleInfo})
+    `;
+}
+const info = getCode('./src/index.js');
+```
+
