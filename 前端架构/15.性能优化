@@ -35,3 +35,49 @@ http:
 4. push cache：http2的缓存
 
 ### 文件打包
+分析文件大小
+```
+npm install lodash echarts moment --save-dev;
+
+const BundleAnalayzerplugin = require('webpack-bundle-analyzer').BundleAnalayzerplugin;
+
+module.exports = {
+    configureWebpacl: {
+        plugins: [
+            new BundleAnalayzerplugin()
+        ]
+    }
+}
+
+```
+
+输出代码
+
+```
+import monent from 'moment';
+import _ from 'lodash';
+Vue.config.productionTip = false;
+console.log(moment());
+console.log(_.max([5,4,1,6,8]));
+```
+或者执行vue ui
+
+如果我们改成只引入lodash 需要的模块，moment换成更小的dayjs
+打包后的大小从464kb下江城143kb
+
+删除冗余代码的tree-shaking，和去除无效代码，我们webpack那里都介绍过，这里不赘述了，如果是个别页面使用了echats, 移动记得懒加载
+
+### 图片优化
+图片通常是占用流量的，PC端加载的平均图片大小时600k，简直比js打包后的文件还大了，所有针对图片的优化，也是收益不错的
+1. jpg
+    有损压缩
+    体积小，不支持透明
+    用于背景，轮播
+2. png
+    有损压缩，质量高，支持透明
+    色彩线条更丰富，小图，比如logo，商品icon
+3. svg
+    文本，体积小矢量图
+    渲染成本，学习成本
+
+
