@@ -46,7 +46,15 @@ location / {
 --with-limit_conn_module 链接频率限制
 --with-limit_req_module 请求频率限制
 一次TCP请求至少产生一个HTTP请求
-SYN > SYN,ACK -> ACK -REQUEST -> RESPONSE -> FIN -> ACK -> FIN -> ACK
+- 三次握手
+SYN > SYC,ACK -> ACK
+- 四次挥手
+FIN -> ACK -> FIN -> ACK
+- 全流程
+SYN > SYC,ACK -> ACK -> REQUEST -> RESPONSE -> FIN -> ACK -> FIN -> ACK
+为什么握手三次，挥手四次？
+因为客户端需要断开，服务端接收到断开消息，但此时信息可能没有发完，所以在可以断开的时候需要通知客户端，可以断开。所以会多一次挥手。
+断开？断开！断开？断开！
 
 - ab
 Apache 的命令模拟多线程并发请求，测试服务器负载压力，也可以测试nginx,linghthttp,iis等其他web服务器的压力
@@ -54,4 +62,19 @@ Apache 的命令模拟多线程并发请求，测试服务器负载压力，也�
 -c 并发的请求数
 ```
 ab -b 40 -c 20 http://127.0.0.1/
+```
+
+### 请求限制
+limit_req_zone
+限制每秒的请求数
+limit_req_zone key zone=name:size rate=rate;
+limit_req;
+```
+limit_req_zone $binary_remote_addr zone=req_zone:1m rate=1r/s;
+server {
+    location / {
+        limit_req req_zone;
+        limit_req zone=req_zone burst=3 nodelay;
+    }
+}
 ```
