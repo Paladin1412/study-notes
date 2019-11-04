@@ -43,3 +43,15 @@ location / {
 ### 请求限制
 - 限制连接数
 - 限制请求数
+--with-limit_conn_module 链接频率限制
+--with-limit_req_module 请求频率限制
+一次TCP请求至少产生一个HTTP请求
+SYN > SYN,ACK -> ACK -REQUEST -> RESPONSE -> FIN -> ACK -> FIN -> ACK
+
+- ab
+Apache 的命令模拟多线程并发请求，测试服务器负载压力，也可以测试nginx,linghthttp,iis等其他web服务器的压力
+-n 总共的请求数
+-c 并发的请求数
+```
+ab -b 40 -c 20 http://127.0.0.1/
+```
