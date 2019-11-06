@@ -79,3 +79,52 @@ server {
     }
 }
 ```
+
+### 静态资源web服务器
+静态资源: 一般客户端发送请求到web服务器，web服务器从内存中取到相应的文件，返回给客户端，客户端解析并渲染显示出来。
+鼎泰资源: 一般客户端请求的动态资源，先将请求交于web容器，web容器链接数据库，数据库处理数据之后，将内容教给web服务器，web服务器返回给客户端解析渲染处理
+
+```
+    location ~ ^/api { // 如果访问/api开头的路径，转到发http://localhost:3000
+        proxy_pass http://localhost:3000
+    }
+```
+
+浏览器资源: html, css, js
+图片: jpeg, gif, png
+视频: flv, mpeg
+下载文件: word, excel
+
+CDN:
+CDN 的全称是 Content Delivery Network 即内容分发网络
+CDN 系统能够事实地根据网络流量和各节点的链接，负载状况以及到用户的距离和相应的时间等综合信息将用户的请求重新导向距离用户最近的服务器节点上，其目的是使用户可就近取得所需要的内容，解决Internet网络拥挤的状况，提高用户访问网站的响应速度
+
+
+### 跨域
+```
+location ~ ^/api {
+    add_header Access-Control-Allow-Origin http://192.168.20.1:8080;
+    add_header Access-Control-Allow-Methods GET,POST,PUT,DELETE,OPTIONS;
+    proxy_pass http://127.0.0.1:3000;
+}
+```
+
+### 防盗链
+防止网站资源被盗用
+保证信息安全
+防止流量过量
+
+需要区别哪些请求是非正常的用户请求
+使用htto_refer防盗链
+```
+valid_referers none blocked 47.104.184.134;
+if ($invalid_referer) { // 验证通过为0，不用过为1
+    return 403;
+}
+
+```
+
+### 代理服务
+proxy_pass
+- 正向代理
+- 反向代理
