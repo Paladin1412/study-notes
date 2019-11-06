@@ -79,3 +79,117 @@ console.log(_.max([5,4,1,6,8]));
 3. svg
     文本，体积小矢量图
     渲染成本，学习成本
+
+打包雪碧图，减少http请求次数，webpack-spritesmith
+gzip压缩， accept-encoding: gzip; 开启
+
+Http压缩就是以缩小体积为目的，对http内容进行重新编码的过程
+gzip压缩背后的原理，是在一个文本文件中找出一些重复出现的字符串，临时替换他们，从而使整个文件变小，根据这个原理，文件中代码的重复率越高，那么压缩的效率越高，使用Gzip的收益也就越大，反之亦然。
+
+基本上来说，Gzip就是服务器干的活，比如nginx
+
+本地存储
+- cookie
+最早，体积先定，性能浪费，所有请求都带上当前域名下的所有cookie
+- localstroage
+存储量大，不自动发给服务端，js控制，永久有效
+- sessionstroage
+存储量大，不自动发给服务端，js控制，关闭浏览器或手动新开选项卡失效。
+- indexDB
+运行在浏览器的非关系型数据库
+- pwd
+基于缓存技术的应用模型
+
+CDN
+项目部署在分布式的服务器上，用户就近获取资源
+cdn单独的域名，浏览器并发获取
+
+服务端渲染
+如果是spa首屏ssr就是性能优化的重要一环
+nuxt 和 next
+
+Vue服务端渲染
+
+```
+const vue = require('vue');
+// 创建一个express应用
+const server = require('express')();
+// 提取出renderer实例
+const renderer = require('vue-server-renderer').createRenderer();
+
+server.get('*', (req, res) => {
+    const app = new Vue({
+        data: {
+            url: req.url
+        },
+        template: `<div>访问的 URL 是：{{ url }}</div>`
+    });
+    // renderToString 把vue转化为真实dom的关键方法
+    renderer.renderToString(app, (err, html) => {
+        if (err) {
+            res.status(500).end('Internal Server Error');
+            return;
+        }
+        res.send(`
+            <!DOCTYPE html>
+            <html lang="en">
+                <head>
+                    <title>Hello</title>
+                </head>
+                <body>
+                    ${html}
+                </body>
+            </html>
+        `)
+    })
+});
+
+server.listen(8080);
+
+```
+
+nuxt.js 服务端渲染框架体验
+1. 基于Vuejs
+2. 服务端渲染
+3. 路由
+4. 热加载
+5. 支持http2
+
+react 服务端渲染
+
+```
+import express from 'express';
+import React from 'react';
+import { renderToString } from 'react-dom/server';
+import App from './App';
+
+const app = express();
+// renderToString 把虚拟DOM转化为真实DOM的关键方法
+const RDom = renderToString(<App />);
+// 编写HTML模板，插入转化后的真实DOM内容
+const Page = `
+            <!DOCTYPE html>
+            <html lang="en">
+                <head>
+                    <title>Hello</title>
+                </head>
+                <body>
+                    ${RDom}
+                </body>
+            </html>
+`
+app.get('/index', function(req, res) {
+    res.send(Page);
+});
+const server = app.listen(8080);
+```
+
+接口如何更快
+1. 服务问题
+2. 服务也要做缓存，比如说做一个秒杀，只特价100个
+3. 数据库读取比较慢，我们可以把这100个放内存(缓存) redis
+
+首屏加载有哪些比较好的方式
+1. 同构
+2. 骨架屏 + 懒加载
+
