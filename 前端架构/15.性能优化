@@ -193,3 +193,29 @@ const server = app.listen(8080);
 1. 同构
 2. 骨架屏 + 懒加载
 
+### 网络优化
+TCP
+可靠 数据完整性，数据有序
+数据切片，重发，慢启动，滑动窗口，三次握手
+操作系统内置
+
+基于TCP/IP 有了 HTTP 应用层
+
+缓存:
+如果1小时内访问了文件，直接使用缓存200 from cache
+如果过了1个小时，就会咨询服务，有变化更新，无变化304
+
+文件合并
+gzip服务端开启
+文件hash indexasdsada1223.js
+
+hash有点:
+上线不会出现白屏问题，先上线cdn，后上线html
+每次部署，修改的文件，文件名都不一样，所以不会替换，每次先上线cdn
+由于静态资源基本都是kb和mb的量级，硬盘也便宜，三个月清理一次，大概有几个mb的冗余空间。可以接受
+
+雅虎军规！
+
+性能监控 Performance
+
+performance.getEntriesByType('navigation');
