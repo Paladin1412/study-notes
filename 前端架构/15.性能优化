@@ -216,6 +216,148 @@ hash有点:
 
 雅虎军规！
 
-性能监控 Performance
+### 性能监控 Performance
 
 performance.getEntriesByType('navigation');
+重定向耗时: redirectEnd - redirectStart
+DNS查询耗时: domainLookuoEnd - domainLookupStart
+TCP链接耗时: connectEnd - connectStart
+HTTP请求耗时: responseEnd - responseStart
+解析dom树耗时: domComplete - domInteractive
+白屏时间: responseStart - navigationStart
+DOMready时间: domContentLoadedEventEnd - navigationStart
+onload时间: loadEventEnd - navigationStart, 也是onload回调函数执行的时间
+
+### LightHouse
+chrome 插件, 现在可以用命令行执行
+```
+npm install -g lighthouse
+
+lighthouse https://www.baidu.com/ --view
+```
+
+如何做性能监控
+
+1. 通过performance 这个api可以获取到当前网页的监控数据
+2. 通过img标签发出请求，server 接受请求，解析参数，获取到用户ip, 比如百度统计，加载了很多的图片
+<img src="ddsadsa.jpg?dns=0.1&tcp=0.2&domload=0.3">
+3. 前端要做统计，肯定要发网络请求，ajax, img, script, link, 使用img加载1*1的小图
+
+服务实现:
+1. 第一种方式：img 实际是个接口，通过处理接口可以监控
+2. 第二种: 不是接口，实际就是一个图片，访问任何静态资源。nginx都有日志, 通过处理日志，获取统计结果
+
+节流:
+滚动，隔一段时间只触发一次，第一个说了算，在时间结束触发。
+```
+const throttle = (func, wait = 50) => {
+    let lastTime = 0;
+    return (...args) => {
+        let now = Date.now();
+        if (now - lastTime > wait) {
+            lastTime = now;
+            func.apply(this, args);
+        }
+    }
+}
+```
+
+防抖:
+输入，完成后再统一发送请求，最后一个人说了算，只认最后一次
+```
+const debounce = (func, wait = 50) => {
+    let timer = 0;
+    return function(...args) {
+        if (timer) {
+            clearTimeout(timer);
+        }
+        timer = setTimeout(() => {
+            func.apply(this, args);
+        }, wait);
+    }
+}
+```
+
+重绘，回流
+
+- 重绘: 
+当我们对DOM的修改导致了样式的变化，却并未影响其几何属性(比如修改了颜色或背景色)时，浏览器不需要重新计算元素的几何属性，直接为该元素绘制新的样式(跳过了回流环节), 这个过程叫重绘
+- 回流:
+当我们对DOM的修改引发了DOM几何尺寸的变化(比如修改元素的宽高，或隐藏元素等)，浏览器需要重新计算元素的几何属性(其他元素的几何属性和位置也会因此受到影响)，然后再将计算的结果绘制出来，这个过程就是回流, 也叫重排。
+- 由此我们可以看出，重绘不一定导致回流，回流一定会导致重绘
+
+回流是影响最大的
+1. 窗体，字体大小
+2. 增加样式表
+3. 内容变化
+4. class属性
+5. offsetWidth 和 offsetHeight
+6. fixed
+
+DocumentFragment 缓存 dom
+
+lazy-load
+```
+// 获取所有图片
+const imgs = document.getElementsByTagName('img');
+// 获取可视区的高度
+const viewHeight = window.innerHeight || document.documentElement.clientHeight;
+
+// num 用于统计当前显示到了哪一张图片
+let num = 0;
+function lazyload() {
+    for (let i = num; i < imgs.length; i++) {
+        // 用可视区高度减去元素顶部距离可视区顶部的高度
+        let distance = viewHeight - imgs[i].getBoundingClientRect().top;
+        // 如果可视区高度大于等于元素顶部距离可视区顶部的高度，说明元素露出
+        if (distance >= 0) {
+            // 给元素写入真实的src，展示图片
+            imgs[i].src = imgs[i].getAttribute('data-src');
+            // 前i张图片已经加载完毕，下次从第i + 1 张开始检查是否露出
+            num = i + 1;
+        }
+    }
+}
+
+window.addEventListener('scroll', lazyload, false);
+
+```
+
+Object.freeze();
+冻结数据，取消setters; 不可变
+
+值传递需要的props
+不要随便<Component {...props} />
+
+redux + reselect
+data扁平化
+每当store发生改变的时候，connect就会触发重新计算，为了减少重复的不需要计算，减少大型项目的性能开支，需要对selector函数做缓存，推荐使用reactjs/reselect
+
+长列表优化如何优化？
+只保留三屏的页面dom，react-virtualized，只渲染可见的
+如果有1000个，只渲染20个，鼠标滚动的时候，新节点替换老节点。
+```
+renderRow(item) {
+    return <div>
+    <img src"image">
+    <div>name</div>
+    </div>
+}
+
+import { List } from 'react-virtualized';
+<div>
+{
+    this.list.map(this.renderRow.bind(this))
+}
+</div>
+
+<List
+    width={100}
+    height={100}
+    rowHeight={10}
+    rowRenderer={this.renderRow.bind(this)}
+    rowCount={this.list.length}
+/>
+
+```
+浏览器渲染原理
