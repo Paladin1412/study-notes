@@ -123,7 +123,6 @@ if ($invalid_referer) { // 验证通过为0，不用过为1
 }
 
 ```
-
 ### 代理服务
 proxy_pass
 - 正向代理
