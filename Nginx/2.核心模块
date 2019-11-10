@@ -115,7 +115,7 @@ location ~ ^/api {
 防止流量过量
 
 需要区别哪些请求是非正常的用户请求
-使用htto_refer防盗链
+使用http_refer防盗链
 ```
 valid_referers none blocked 47.104.184.134;
 if ($invalid_referer) { // 验证通过为0，不用过为1
@@ -124,6 +124,8 @@ if ($invalid_referer) { // 验证通过为0，不用过为1
 
 ```
 ### 代理服务
-proxy_pass
+proxy_pass URL
 - 正向代理
+正向代理的对象是客户端，服务端看不到真正的客户端
+通过公司代理服务器上网
 - 反向代理
