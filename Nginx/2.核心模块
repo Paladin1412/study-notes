@@ -128,4 +128,21 @@ proxy_pass URL
 - 正向代理
 正向代理的对象是客户端，服务端看不到真正的客户端
 通过公司代理服务器上网
+比如翻墙，我们请求代理服务器，让代理服务器启去请求，再返回给我们
+```
+// 修改host文件，域名指向代理服务器
+server_name localhost 192.168.20.129 www.cdlxgn.com; // 配置域名
+resolver 8.8.8.8; // 谷歌域名解析地址
+location / {
+    proxy_pass http://$http_host$request_uri; // 客户端请求的时候去转发
+}
+```
 - 反向代理
+代理的是服务端，客户端看不到真正的服务端
+```
+location ~ ^/api {
+    proxy_pass http://127.0.0.1:3000;
+}
+```
+
+### 负载均衡
