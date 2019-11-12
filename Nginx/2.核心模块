@@ -153,11 +153,36 @@ location ~ ^/api {
 upstream: 服务池，nginx吧请求转发到后台的一组upstream服务池中
 ```
 upstream zhufeng {
-    server 127.0.0.1:3000;
-    server 127.0.0.1:4000;
-    server 127.0.0.1:5000;
+    server 127.0.0.1:3000 weight=10; # 权重越高，分配的越多
+    server 127.0.0.1:4000 weight=2;
+    server 127.0.0.1:5000 weight=2;
 }
-location / {
-    proxy_pass http://zhufeng;
+server {
+    location / {
+        proxy_pass http://zhufeng;
+    }
+}
+
+```
+weight: 权重，数字
+down: 禁止轮询
+backup: 其他服务都挂掉了，才会执行
+max_fails: 允许请求失败的次数
+fail_timeout: 经过max_fails失败多长时间再次使用，默认10s
+max_conns: 限制每个server最大额接收的连接数，性能高的服务可以链接数多一些
+```
+upstream zfpx {
+    server 127.0.0.1:3000 down;
+    server 127.0.0.1:4000 backup;
+    server 127.0.0.1:5000 max_fails=1 fail_timeout=10s;
 }
 ```
+
+分配方式:
+轮询: 每次请求按时间顺序逐一分配到不同的服务器，如果服务器down掉能自动剔除
+weight：指定轮询几率
+ip_hash
+least_conn
+url_hash
+fair
+正定义hash
