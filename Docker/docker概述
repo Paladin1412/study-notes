@@ -38,11 +38,67 @@ KVM基于硬件的完全虚拟化，需要硬性CPU虚拟化技术支持
 容器共享宿主机内核，可运行在主机的linux的发行版，不用考虑CPU是否支持虚拟化技术
 
 ### docker的使用场景
-- 节省项目环境部署时间
+- 节省项目环境部署时间 
 单项目打包
 整套项目打包
-新开源技术
+新开源技术试用
 - 环境一致性
 - 持续集成
 - 微服务
 - 弹性伸缩
+
+### Docker 体系结构
+containerd 是一个守护进程。使用runC
+可以通过镜像生成容器。
+
+### Docker 内部组件
+
+### docker 安装
+docker分为企业版EE和社区版CE
+网址 https://docs.docker.com/install/linux/docker-ce/centos/
+选择CE版本安装，免费社区版
+
+https://blog.csdn.net/yimenglin/article/details/93718784
+
+查看是否有docker安装源
+```
+yum list | grep docker;
+```
+设置安装源
+```
+// sudo yum install -y yum-utils;
+yum-config-manager
+--add-repo
+https://download.docker
+```
+安装过程:
+```
+// 卸载老版本
+$ sudo yum remove docker \
+                docker-client \
+                docker-client-latest \
+                docker-common \
+                docker-latest \
+                docker-latest-logrotate \
+                docker-logrotate \
+                docker-engine
+
+// 设置镜像源
+sudo yum-config-manager \
+    --add-repo \
+    https://download.docker.com/linux/centos/docker-ce.repo
+// 安装docker
+sudo yum install docker-ce docker-ce-cli containerd.io
+// 启动docker
+sudo systemctl start docker
+// 运行 
+sudo docker run hello-world
+```
+
+### docker架构
+客户端: 将命令下发给docker daemon后台，后台去远程仓库拉取镜像，放在本地images镜像仓库
+docker pull --> docker daemon --> registry --> images(docker服务器)
+docker run --> docker daemon(Images) --> Containers(容器)
+docker build ---> docker daemon(Images) : 基于已有镜像构建
+
+### 阿里云加速
