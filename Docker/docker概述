@@ -101,4 +101,6 @@ docker pull --> docker daemon --> registry --> images(docker服务器)
 docker run --> docker daemon(Images) --> Containers(容器)
 docker build ---> docker daemon(Images) : 基于已有镜像构建
 
+
 ### 阿里云加速
+下载速度会变得很快
