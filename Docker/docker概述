@@ -103,3 +103,23 @@ docker build ---> docker daemon(Images) : 基于已有镜像构建
 
 ### 阿里云加速
 下载速度会变得很快
+
+### image 镜像
+docker 把应用程序及其依赖，打包在image文件里面，只有通过这个文件才能生成docker容器
+image 文件可以看做是容器的模板
+docker 根据image文件生成容器的实例
+同一个image文件，可以生成多个同时运行的容器实例
+镜像不是一个单一的文件，而是有多层
+容器其实就是在镜像的最上面加了一层读写层，在运行容器里做的任何改动，都会写到这个读写层里，如果容器删除了，最上面的读写层也就删除了，改动也就丢失了。
+我们可以通过docker history <ID/NAME> 查看镜像中各层内容及大小，每层对应着dockerfile中的一条指令
+
+命令
+docker  image ls;  列出当前本地的所有镜像
+docker image search ubuntu : 查看指定镜像的版本
+
+docker image pull centos:6; 拉取版本
+docker image pull centos; 拉取版本
+...
+用户可以使用docker load 来
+
+### 容器
