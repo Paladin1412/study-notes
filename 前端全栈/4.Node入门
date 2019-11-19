@@ -86,7 +86,7 @@ console.log(obj.digest('hex')); // MD5 32位
 - 多线程
 成本低，速度快，不安全，线程间通信简单，写代码复杂。
 
-### Events 时间队列
+### Events 事件队列
 ```
 const Event = require('events').EventEmitter;
 let ev = new Event();
