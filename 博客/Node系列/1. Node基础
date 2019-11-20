@@ -1,13 +1,27 @@
 ## NodeJs是什么
 node是一个异步的事件驱动的javascript运行时。即node并不是一门开发语言，而是一个运行环境，让服务器可以识别并运行javascript代码。
-node的特点为 非阻塞IO 和 事件驱动 这两点我们再后面会讲到。
+node的特点为 非阻塞IO 和 事件驱动 这两点我们再后面会讲到。node 基于v8，并不包含javascript的全局.
 
 浏览器端的javascript包含三部分
 1. DOM 文档对象模型 api
 2. BOM 浏览器对象模型 api
 3. ECMAScript，基本语法 + 对象
 
-在服务端，因为并不存在浏览器环境，也就没有DOM和BOM，所以在node中，只有ECMAScript + 一部分对象，如日期对象Date, Math对象等。
+在服务端，因为并不存在浏览器环境，也就没有DOM和BOM，所以在node中，只有ECMAScript + 一部分对象，如fs等。
+
+### 线程，进程
+程序的分配单位靠的是进程，也是计算机最小运行单位，进程可以理解为一个环境，环境中可以开很多线程（node主线程是单线程）底层还是通过多线程来模拟了异步
+Java是多线程 （切换执行上下文 切换的很快）如果需要并发操作同一个文件则需要加入锁的概念，node中没有锁的概念所以依靠回调函数来解决异步问题。
+多进程 增强稳定性，比如说浏览器，每个窗口都是一个进程，如果共用一个进程，一个页面挂掉，所有页面都会挂掉
+
+### 浏览器
+共有两个线程，UI线程，js线程，这两个线程是互斥的，一个执行另一个就要停止
+浏览器为什么不是多线程的，防止同时操作dom
+
+### node执行
+- 异步/同步，调用api，服务端(被调用方)可以决定此方法是 同步还是异步的
+- 阻塞/非阻塞，被调用方通知到调用方，决定调用方的状态是阻塞或者非阻塞
+***同步就是阻塞，异步就是非阻塞***
 
 ## 安装node
 直接官网[下载](http://nodejs.cn/download/), 点击下一步安装即可。
@@ -58,13 +72,24 @@ var age = 18;
 // 导出模块内容，模块中的内容需要导出才可以被载入使用
 module.exports = age;
 ```
-模块使用
+使用该模块
 ```
 // 导入模块，自定义的模块导入需要写明相对位置，如不写则会识别为内建模块或第三方模块，造成模块无法找到
 var conf = require('./conf);
 console.log(conf);
 ```
 
+## 全局作用
+node存在全局对象global，在node中可以直接访问global，这不同于浏览器，浏览器中并没有global，取而代之的是window
+
+- process 进程，当前运行的环境
+- Buffer 读取的内容，都是二进制，buffer 主要是内存 缓存 16进制 可以和字符串相互转化
+- clearImmediate setImmediate 宏任务
+- clearInterval setTimeout 宏任务
+- clearTimeout 宏任务
+- eval decode encode  console.dir(global, { showHidden: true})
+- this node的文件，默认在外面套了一层函数，在函数运行时把this指向改变了，所以在文件中输出this返回{}, 在命令行输出才有内容
+// repl read-eval-print-loop 交互式解析器，
 ## 核心API
 
 - Assertion
@@ -107,6 +132,11 @@ fs.readFile('1.txt', (err, data) => {
     
   })
 })
+
+// stream 使用缓冲区复制文件
+const rs = fs.createReadStream('./conf.txt');
+const ws = fs.createWriteStream('./conf2.txt');
+rs.pipe(ws);
 ```
 
 - Buffer

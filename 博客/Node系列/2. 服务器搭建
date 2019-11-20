@@ -1,0 +1,120 @@
+1. 使用http模块搭建简单服务器
+2. 实现简单版express
+
+## web服务器搭建
+```
+const http = require('http');
+const fs = require('fs');
+const server = http.createServer((req, res) {
+    res.setHeader('aaaaaa', '123');
+    const params = url.parse(req.url, true);
+    fs.readFile(`www${req.url}`, (err, data) => { // 通过url路径，拿到本地文件
+        if (err) {
+            res.writeHeader(404);
+            res.write('404');
+        } else {
+            res.writeHeader(200);
+            res.write(data);
+        }
+        res.end();
+    })
+    res.end();
+});
+server.listen(8080);
+```
+writeHeader: 设置响应码 
+write: 返回的就是响应体，即前端拿到的数据
+setHeader: 设置响应头
+
+上面的服务是一个web的静态服务器，也即适配get请求，对于post请求来说，由于请求数据量较大，需要持续接收数据
+```
+const http = require('http');
+const querystring = require('querystring'); // 用于解析前端传入的参数，将a=1&b=2 解析为 {a:1, b: 2};
+const server = http.createServer((req, res) => {
+    const arr = []; // 创建一个数组，用于接收前端传入的数据，前端传入的数据为Buffer类型。
+    req.on('data', data => { // 持续接收数据
+        arr.push(data);
+    });
+    req.on('end', data => { // 数据传输完成
+        const str = Buffer.concat(arr);
+        const post = querystring.parse(str);
+        console.log(post); // 获取到传入的参数
+        res.end(); // 结束
+    })
+});
+server.listen(8080);
+```
+使用字符串接收流文件时会有问题。因为不是所有的文件都可以转换为字符串查看，比如说视频流，图片流
+
+总结:
+1、GET数据
+- 在req.url 里
+
+2、POST数据
+- 在body里面，数据比较大，使用data 和 end 事件处理
+
+## 实现简单版express
+先来熟悉一下express的功能
+```
+// 安装express
+// npm install express -g;
+
+const express = require('express'); // 导入express
+const app = express();
+app.get('/', (req, res) => { // 监听get请求，访问根路径
+    res.end("Hello Express"); // 返回Hello Express
+});
+app.get('/users', (req, res) => { // 监听get请求，访问/users路径
+    res.end(JSON.stringify([{name: 'yd', age: 18}])); // 返回json
+});
+app.listen(3000, () => { // 监听3000端口
+    console.log('Example app listen at 3000');
+})
+```
+实现自己Express ===> MyExpress;
+
+```
+const http = require('http'); // 引入http 模块，基于http模块进行开发
+const url = require('url'); // 引入url模块，解析url和前端传入的params
+
+let router = []; // 定义路由集合
+
+class MyExpress {
+    listen() { // 设置监听方法
+        const server = http.createServer((req, res) => {
+            const { pathname } = url.parse(req.url, true); // 解析url并获取请求路径
+            router.forEach(route => {
+                // 从注册的路由中遍历出符合的路由
+                const { path, method, handler } = route;
+                if (pathname === path && req.method.toLowerCase() === method) {
+                    return handler(req, res);
+                }
+                if (path === '*') {
+                    return handler(req, res);
+                }
+            })
+        });
+        server.listen(...arguments);
+    }
+    get(path, handler) {
+        if (typeof path === 'string') {
+            router.push({
+                path,
+                method: 'get',
+                handler
+            });
+        } else {
+            router.push({
+                path: '*',
+                method: 'get',
+                handler: path
+            })
+        }
+    }
+}
+
+module.exports = () => {
+    return new MyExpress();
+} 
+
+```
