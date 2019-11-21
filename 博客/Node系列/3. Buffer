@@ -1,0 +1,166 @@
+## Buffer
+JavaScript 语言自身只有字符串数据类型，没有二进制数据类型。
+但在处理像TCP流或文件流时，必须使用到二进制数据。因此在 Node.js中，定义了一个 Buffer 类，该类用来创建一个专门存放二进制数据的缓存区。
+在 Node.js 中，Buffer 类是随 Node 内核一起发布的核心库。Buffer 库为 Node.js 带来了一种存储原始数据的方法，可以让 Node.js 处理二进制数据，每当需要在 Node.js 中处理I/O操作中移动的数据时，就有可能使用 Buffer 库。原始数据存储在 Buffer 类的实例中。一个 Buffer 类似于一个整数数组，但它对应于 V8 堆内存之外的一块原始内存。
+
+buffer中存储的是16进制，将node的2进制保存为16进制存储
+
+utf8(3个字节) 
+gbk/gb2312(2个字节)
+
+```
+const buffer = Buffer.from("哈哈"); // 创建 buffer 对象
+console.log(buffer); // 可以看出打印出6个字节
+buffer.toString(); // 转换成string
+console.log(buffer.toString('base64')); // buffer转换成base64
+```
+
+创建buffer对象
+const buf1 = Buffer.alloc(10); // 定义字节长度为10的buffer
+const buf2 = Buffer.from([1, 2, 3]); 创建一个包含 [0x1, 0x2, 0x3] 的 Buffer。
+const buf3 = Buffer.from("Buffer创建方法"); // 根据字符串创建buffer
+
+Buffer 中常见的方法
+数组的方法, forEach, slice, 等等
+```
+buf3.forEach(b => {
+    console.log(b);
+})
+
+```
+
+buffer 一旦声明，就不能再增加长度， copy + concat + split
+```
+const b1 = Buffer.from("你");
+const b2 = Buffer.from("好");
+const big = Buffer.alloc(6);
+b1.copy(big, 0, 0 ,3);
+b2.copy(big, 3, 0, 3);
+const big = Buffer.concat([b1, b2]);
+
+```
+
+fs 模块读取到的内容即为buffer
+```
+const fs = require('fs');
+fs.readFile('./a.txt', (err, data) => {
+    console.log(data); // <Buffer e5 93 88>
+})
+```
+
+流文件读取
+
+```
+const fs = require('fs');
+const path = require('path');
+const rs = fs.createReadSteam(path.resolve(__dirname, 'name.txt'), {
+    flags: 'r', // r w 读和写权限
+    highWaterMark: 4, // 每次预计读取多少个
+    encoding: null,
+    autoClose: true, // 读取完毕，关闭文件
+    start: 0,
+    end: 5 // slice(start, end) 包含end的
+})
+// 流 默认流是暂停模式，非流动模式，内部会监控你有没有监听data事件 rs.emit('data', 123);
+const arr = [];
+rs.on('data', function(chunk) {
+    arr.push(chunk);
+    rs.pause(); // 暂停data事件的触发  rs.play(); 继续
+});
+rs.on('end', function() {
+    console.log(Buffer.concat(arr).toString()); // 读取完毕
+});
+
+rs.on('error', function(error) {
+    console.log(error);
+})
+```
+可用于视频流音频流在线播放
+还可以用于文件的压缩
+
+zlib
+压缩功能
+```
+const zlib = require('zlib');
+const fs = require('fs');
+const rs = fs.cerateReadStream('jquery.js');
+const ws = fs.cerateWriteStream('jquery.js.gz');
+const gz = zlib,createGzip();
+rs.pipe(gz).pipe(ws);
+ws.on('error', (err) => {
+    console.log('失败');
+})
+ws.on('finish', () => {
+    console.log('完成')
+})
+```
+
+服务器压缩文件
+```
+const http = require('http'); // 服务模块
+const fs = require('fs'); // 读取文件
+const zlib = require('zlib'); // 压缩模块
+
+const server = http.cerateServer((req, res) => {
+    const rs = fs.cerateReadStream(`www${req.url}`);
+    res.setHeader('content-encoding', 'gzip'); // 设置响应头
+    const gz = zlib.createGzip(); // gz压缩
+    rs.pipe(gz).pipe(res); // 压缩后返回给前端
+    rs.on('error', err => { // 监听失败
+        res.setHeader(404);
+        res.write('Not Found');
+        res.end();
+       console.log('读取失败')
+    })
+    rs.on('finish', err => { // 传输完成
+       console.log('写入完成')
+    })
+}).listen(8080)
+```
+
+服务端压缩成gzip需要设置响应头，content-encoding: gzip, 否则无法加载。
+
+面向字节的设备: 一个一个字节输入， 比如键盘
+面向流的设备: 网卡，一块数据
+
+## base64
+一切能放路径的地方，都可以使用base64
+```
+const r = Buffer.from("哈"); // e5 93 88
+r.toString('base64'); // 5ZOI   
+
+// 将每个字节转为二进制
+(0xe5).toString(2); // 11100101
+(0x93).toString(2); // 10010011
+(0x88).toString(2); // 10001000
+
+// 将二进制按顺序链接在一起
+111001011001001110001000
+// 6个一组分为四组
+111001 011001 001110 001000
+// 在每一组的前面用0补位，凑齐8位
+00111001
+00011001
+00001110
+00001000
+
+// 二进制转为十进制
+parseInt('00111001', 2); // 二进制变为10进制 57
+parseInt('00011001', 2); // 二进制变为10进制 25
+parseInt('00001110', 2); // 二进制变为10进制 14
+parseInt('00001000', 2); // 二进制变为10进制 8
+
+
+// base64编码
+let str = 'ABCDEFGHIGKLMNOPQRSTUVWSYZ';
+str += str.toLowerCase(); // 小写字符拼接一次
+str += '0123456789+/'; // 数字拼接一次
+const base64 = str[57] + str[25] + str[14] + str[8]; // 5ZOI
+```
+
+base64转译步骤
+1、获取buffer，并将每个16的buffer字节转为2进制
+2、将所有二进制拼接在一起，6个一组进行划分，在前面补00，凑成8位二进制
+3、将新的二进制转换成10进制
+4、在base64集合中分别通过10进制下标取出，并链接
+

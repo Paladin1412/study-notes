@@ -16,8 +16,9 @@ console.log(buffer.toString('base64')); // buffer转换成base64
 base64: 一切能放路径的地方，都可以使用base64
 一个汉字是3个字节，24个位， 3 * 8 = 4 * 6 变成四个字节
 ```
-const r = Buffer.from("珠");
-r.toStrong('base64'); // 54+g   e7 8f a0
+const r = Buffer.from("哈"); // 
+r.toString('base64'); // 5ZOI   e5 93 88
+
 
 // 将每个字节转为二进制
 (0xe7).toString(2); // 11100111
@@ -39,7 +40,7 @@ str[57] + str[56] + str[62] + str[32]; // 54+g
 
 ```
 
-base64转移步骤
+base64转译步骤
 1、获取buffer，并将每个16的buffer字节转为2进制
 2、将所有二进制拼接在一起，6个一组进行划分，在前面补00，凑成8位二进制
 3、将新的二进制转换成10进制
