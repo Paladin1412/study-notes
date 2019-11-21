@@ -1,0 +1,91 @@
+1. 跨域解决
+2. 响应头设置
+3. html模板ejs
+4. 文件上传
+5. 缓存实现
+
+## 简单web服务器
+```
+const http = require('http');
+
+const server = http.createServer((req, res) => {
+    res.write("123");
+    res.end();
+});
+server.listen(8080);
+
+```
+
+## 跨域
+因为浏览器同源策略的原因，会对 域名，端口，协议进行校验，如果不能保证三者相同，则存在跨域拦截，即请求无法获取到服务器的返回数据
+
+三种方式可以解决跨域
+第一种. 保证前后端 域名，端口，协议 一致
+第二种. 使用jsonp 解决跨域问题。
+第三种. CORS，服务端设置响应头Access-Control-Allow-Origin，值为允许跨域的域名
+
+服务端设置cors案例
+```
+const http = require('http');
+
+const server = http.createServer((req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:5500'); // 允许跨域的域名http://127.0.0.1:5500
+    res.write("123");
+    res.end();
+});
+server.listen(8080);
+
+```
+
+前端ajax代码, 前端运行服务器，域名端口号为http://127.0.0.1:5500
+```
+const xhr = new XMLHttpRequest();
+xhr.open('POST', 'http://127.0.0.1:8080/', true);
+xhr.resopnseType = 'json';
+// document.cookie = 'token=100';
+xhr.withCredentials = true; // 跨域不允许携带cookie，设置强制携带，需要要求服务端设置的允许域名不能为*
+xhr.setRequestHeader('token', 'asd.askfs.g'); // 设置请求头
+xhr.onreadstatechange = function() {
+    if (xhr.status === 200 && xhr.readyState === 4) {
+        
+    }
+}
+xhr.send();
+```
+Access-Control-Allow-Origin 响应头可设置允许域名为具体域名，也可设置为通配符 *
+res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,DELET,OPTIONS,POST'); // 允许的请求方式
+res.setHeader('Access-Control-Allow-Headers', 'Content-type,token'); // 允许携带的请求头
+res.setHeader('Access-Control-Max-age', 10); 允许权限测试的缓存时间，单位秒，options的发送间隔
+res.setHeader('Access-Control-Allow-Credentials', true); // 允许跨域写到cookie
+res.setHeader('Set-Cookie', ['name=1', 'age=2']); 设置cookie
+
+## ejs模板的使用
+```
+const ejs = require('ejs');
+const fs = require('fs');
+const http = require('http');
+
+const server = http.createServer((req, res) => {
+    const data = { name: 'yd', age: 18 };
+    const template = fs.readFileSync(path.resolve(__dirname, 'index.ejs'), 'utf-8');
+    const str = ejs.render(template, data);
+    res.write(str);
+    res.end();
+});
+server.listen(8080);
+```
+index.ejs;
+
+<div>
+<%=name%>  
+<%=age%>
+</div>
+
+
+## localStorage sessionStorage cookie 区别
+localStorage: 本地存储，每个网站最大5m，一直存，不能跨域，存储在浏览器中
+sessionStorage: 不关闭浏览器就存活
+cookie: 浏览，每次请求时，会带上cookie，做注册登录(cookie存放不敏感信息)
+session: 比较安全,内容存放在服务器，session是基于cookie
+每次请求时 会自动带上cookie, 我可以去通过sssion找到当前账号的对应内容，内存存在服务器了
+redis / mongo 存储到数据库中
