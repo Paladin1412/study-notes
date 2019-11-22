@@ -217,6 +217,32 @@ ev.on('msg', function(a, b,c) {
 ev.emit('msg', 12,3,8);
 ```
 
+自己实现一个Events
+```
+class EventEmitter {
+    constructor() {
+        this._events = {};
+    }
+    on(eventName, callBack) {
+        if (this._events[eventName]) {
+            this._events[eventName].push(callBack);
+        } else {
+            this._events[eventName] = [callBack];
+        }
+        
+    }
+    emit(eventName) {
+        this._events[eventName].forEach(fn => {
+            fn();
+        })
+    },
+    off(eventName, callBack) {
+        this._events[eventName] = this._events[eventName].filter(fn => fn !== callBack)
+    }
+}
+
+```
+
 - url 模块
 请求url模块
 ```

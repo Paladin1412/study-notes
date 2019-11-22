@@ -58,6 +58,7 @@ res.setHeader('Access-Control-Allow-Headers', 'Content-type,token'); // 允许�
 res.setHeader('Access-Control-Max-age', 10); 允许权限测试的缓存时间，单位秒，options的发送间隔
 res.setHeader('Access-Control-Allow-Credentials', true); // 允许跨域写到cookie
 res.setHeader('Set-Cookie', ['name=1', 'age=2']); 设置cookie
+res.setHeader('Content-Type', 'text/plain;charset=utf-8'); // 设置响应字符集，解决中文乱码
 
 ## ejs模板的使用
 ```
@@ -81,6 +82,37 @@ index.ejs;
 <%=age%>
 </div>
 
+ejs 解析原理
+
+function render(template, data) {
+    return template.replace(/<%=([\s\S]*?)%>/g, function () {
+        return data[arguments[1]];
+    })
+}
+
+复杂一点的代码
+<div>
+<%arr.forEach(a => {%>
+    <li><%=a%></li>
+<%})%>
+</div>
+
+
+```
+function render(template, data) {
+    template = template.replace(/<%=([\s\S]*?)%>/g, function() {
+        return '${' + arguments[1] + '}';
+    })
+    let head = 'let str;\r\nwith(data){\r\n';
+    head += 'str=`';
+    const content = template.replace(/<%([\s\S]*?)%>/g, function() {
+        return '`\r\n' + arguments[1] + '\r\nstr+=`';
+    });
+    const tail = '`\r\n}\r\nreturn str;';
+    const fn = new Function('data', head + content + tail);
+    return fn(data);
+}
+```
 
 ## localStorage sessionStorage cookie 区别
 localStorage: 本地存储，每个网站最大5m，一直存，不能跨域，存储在浏览器中
@@ -89,3 +121,25 @@ cookie: 浏览，每次请求时，会带上cookie，做注册登录(cookie存�
 session: 比较安全,内容存放在服务器，session是基于cookie
 每次请求时 会自动带上cookie, 我可以去通过sssion找到当前账号的对应内容，内存存在服务器了
 redis / mongo 存储到数据库中
+
+
+## 附件上传
+表单的三种POST提交方式 enctype
+1、text/plain:  提交纯文本的数据，用的很少。
+2、application/x-www-form-urlencoded：默认方式， 采用url编码方式
+3、multipart/form-data: 上传文件内容，上传附件时，要选用该种类型。
+如果使用x-www-form-urlencoded默认方式，也会上传文件，但只会上传文件的名字。文件内容不会上传
+
+
+```
+// 一个简单的服务器
+const http = require('http');
+const fs = reuqire('fs');
+const URL = require('url');
+const server = http.createServer((req, res) => {
+    console.log(URL.parse(req.url, true));
+    res.write("start");
+    res.end();
+});
+server.listen(8080);
+```
