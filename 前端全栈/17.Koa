@@ -98,7 +98,7 @@ ctx.cookies.set('b', 5, {
 });
 
 8、session
-需要手动杆状koa-session插件
+需要手动安装koa-session插件
 ```
 const session = require('koa-session');
 // session 必须加要一组keys，防止被劫持
