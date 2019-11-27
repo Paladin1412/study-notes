@@ -1,9 +1,97 @@
 1. 服务端渲染
-2. 数据库，持久化
+2. 数据持久化
 3. redis
 
+## 服务端渲染
+CSR & SSR
+CSR: client side render 客户端渲染
+SSR: server side render 服务端渲染
+#### 传统的web开发体验
+客户端通过url请求服务器，服务器查询数据库，拼接出html字符串，返回给客户端，客户端进行渲染html
+```
+const express = require('express'); // npm install express -S;
+const app = express();
+app.get('/', function(req, res) {
+    res.send(`
+    <html>
+        <div>hello yd</div>
+    </html>
+    `)
+});
+app.listen(3000, () => {
+    console.log('启动成功');
+})
+```
+上述服务器代码浏览器可以拿到全部dom结构
+
+#### SPA时代
+到了vue，react时代，单页应用优秀的用户体验，逐渐成为了主流，页面整体是JS渲染出来的，称之为客户端渲染。
+客户端通过url请求服务器，服务器返回html的基本结构，不存在body内的dom，客户端执行js，动态生成dom结构，插入至页面。
+可以看出来单页面渲染的两个缺点
+1. 首屏渲染性能
+    必须的等js加载完毕，并且执行完毕，才能渲染出首屏
+2. seo
+    爬虫只能拿到一个div，认为页面是空的，不利于seo
+
+#### SSR
+为了解决这两个问题，出现了SSR解决方案，后端渲染出完成的首屏dom结构返回，前端拿到的内容带上首屏，后续页面操作，再用单页的路由跳转逻辑跳转和渲染，称之为服务端渲染。
+
+vue的服务端渲染
+```
+// npm install vue-server-renderer express --save;
+const express = require('express');
+const Vue = require('vue');
+const app = express();
+const renderer = require('vue-server-renderer').createRenderer();
+const page = new Vue({
+    data: {
+        name: "yd",
+        count: 1,
+    },
+    template: `
+    <div>
+        <h1>{{ name }}</h1>
+        <p>{{ count }}</h1>
+    </div>
+    `
+})
+app.get('/', function(req, res) {
+    const html = await renderer.renderToString(page);
+    res.send(html);
+})
+app.listen(3000, () => {
+    console.log('启动成功');
+})
+```
+通常前端都是vue单文件组件，用vue-loader构建，所以ssr环境需要webpack，怎么操作呢？
+
+路由 vue-router
+单页应用的页面路由，都是前端控制，后端负责提供数据
+一个简单的单页应用，使用vue-router，为了方便前后端共用路由数据，我们新建router.js对外暴露createRouter
+前端代码:
+```
+// npm install vue-router -s;
+import Vue from 'vue';
+import Router from 'vue-router';
+import Index from './components/Index';
+import Yd from './components/Yd';
+Vue.use(Router);
+export function createRouter() {
+    return new Router({
+        routes: [
+            {
+                path: '/', component: Index,
+            },
+            {
+                path: '/yd', component: Yd,
+            }
+        ]
+    })
+}
+```
 
 
+react的服务端渲染
 
 
 3. 前端安全
