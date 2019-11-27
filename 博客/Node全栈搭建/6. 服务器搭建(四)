@@ -1,0 +1,473 @@
+1. 用户鉴权
+2. pwa
+
+## 鉴权
+http是一种无状态的协议，这就意味着每一次的数据交互，服务是没办法确定请求人身份，所以需要用到用户鉴权。
+
+## 常见的鉴权方式
+- session/cookie
+传统方式，会话机制
+- token
+前后端分离，token方式
+- oauth
+开放方式，open author
+
+## session/cookie
+1. 服务器在接受客户端首次访问时在服务器端创建session，然后保存session(我们可以将session保存在内存中，也可以保存在redis中，推荐使用后者)，然后给这个session生成一个唯一的标识字符串，然后再响应头中种下这个唯一标识字符串。
+2. 签名，这一步通过密钥对sid进行签名处理，避免客户端修改sid(非必须步骤)
+3. 浏览器中收到请求响应的时候会解析响应头，然后将sid保存在本地cookie中，浏览器在下次http请求的请求头中会带上该域名下的cookie信息。
+4. 服务器在接受客户端请求时回去解析请求头cookie中的sid，然后根据这个sid去找服务器端保存的该客户端的session，然后判断该请求是否合法。
+
+cookie：存在浏览器里，容量有限4k，不安全(防篡改，加密)
+session: 存在服务器，容量无限，安全的。
+
+session不能单独存在，就是基于cookie的。
+浏览器第一次访问服务器，服务器会生成一个sess_id, 会把这个id作为cookie还给浏览器。浏览器第二次访问的时候，服务器查询到sess_id,可以识别到这个用户。
+
+- koa中的session使用
+npm install koa-session -s;
+
+```
+app.keys = ['some secret', 'another secret'];
+const SESS_CONFIG = {
+    key: 'yd:sess',
+    maxAge: 86400000,
+    httpOnly: true,
+    signed: true,
+}
+app.use(session(SESS_CONFIG, app));
+app.use(ctx => {
+    if (ctx.path === '/facicon.ico') {
+        retrun;
+    }
+    let n = ctx.session.count || 0;
+    ctx.session.count = ++n;
+    ctx.body = `第${n}次`;
+})
+```
+
+- 使用redis存储session
+npm install koa-redis -s;
+```
+const redisStore = require('koa-redis');
+const redis = require('redis');
+const client = redis.createClient(6379, '127.0.0.1');
+app.use(session({
+    key: 'yd:sess',
+    store: redisStore({ client })
+}, app));
+app.use(ctx => {
+    client.keys('*', (err, keys) => {
+        console.log(keys);
+        client.get(key, (err, val) => {
+            console.log(val);
+        })
+    })
+})
+```
+前端登录代码
+```
+axios.defaults.withCredentials = true; // 跨域写到cookie
+axios.interceptors.response.use(response => {
+    app.logs.push(JSON.stringify(response.data));
+    return response;
+});
+var app = new Vue({
+    el: '#app',
+    data: {
+        username: 'test',
+        password: 'test',
+        logs: []
+    },
+    methods: {
+        login: async function() {
+            await axios.post('/users/login', {
+                username: this.username,
+                password: this.password
+            })
+        },
+        logout: async function() {
+            await axios.post('/users/logout');
+        },
+        getUser: async function() {
+            await axios.get('/users/getUser');
+        }
+    }
+})
+```
+
+登录注销接口
+```
+router.post('/login', async ctx => {
+    const body = ctx.request;
+    ctx.session.userinfo = body.username;
+    ctx.body = {
+        ok: 1,
+        message: '成功'
+    }
+})
+router.post('/logout', async ctx => {
+    delete ctx.session.userinfo;
+    ctx.body = {
+        ok: 1,
+        message: '退出'
+    }
+})
+router.get('/getUser', async atx => {
+    ctx.body = {
+        ok: 1,
+        message: '成功',
+        userinfo: ctx.session.userinfo
+    }
+})
+```
+路由守卫中间件
+```
+module.exports = async (ctx, next) => {
+    if (!ctx.session.userinfo) {
+        ctx.body = {
+            ok: 0,
+            message: '未登录'
+        }
+    } else {
+        await next();
+    }
+}
+// 应用守卫
+router.get('/getUser', require(''), async ctx => {});
+```
+
+
+session劫持，把ssid拿走，粘贴到网站上
+1. session定期更换id -- 设置有效期
+2. 签名
+
+cookieSession 可以传入keys 或者secret。
+
+
+## token验证
+1. 登录成功，服务器生成一个令牌，可以通过jwt，返回给浏览器
+2. 浏览器取到cookie, 存在cookie中，再次发送请求时，检验token是否合法
+3. 从token中解析用户信息
+4. 建议使用加密后的密码来做签名，确保每个人都不一样
+优点
+服务端更加轻便可以实现很多可能
+缺点：
+不安全，任何人拿到令牌都可以通过验证
+数据一般通过base64编码的，所以不是很安全，因此不要存入敏感信息，密码之类的
+```
+// npm install jsonwebtoken koa-jwt -S;
+const jwt = require('jsonwebtoken');
+const jwtAuth = require('koa-jwt');
+const secret = "it‘s a secret";
+
+router.post('/login-token', async ctx => {
+    const { body } = ctx.request;
+    const userinfo = body.username;
+    ctx.body = {
+        message: '登陆成功',
+        user: userinfo,
+        token: jwt.sign(
+            {
+            data: userInfo,
+            exp: Math.floor(Date.now() / 1000) + 60 * 60 // 失效时间1小时
+            },
+            secret
+        )
+    }
+})
+
+router.get('/getUser-token', jwtAuth({
+    secret
+}), async ctx => {
+    ctx.body = {
+        message: '成功',
+        userinfo: ctx.state.user.data
+    }
+})
+```
+
+jwt签名原理:
+签名只是防篡改 原理为HMAC SHA256(散列反篡改)
+因为前端不知道服务器的secret，所以没办法准确的修改token，任何的改动都是不合法的，所以可以有效防止篡改
+中间的数据部分，使用的是base64编码，他可以反解出来，因此不能存放敏感信息
+Beare 是一种认证类型，(基于Oauth2.0), 使用 Bearer关键词进行定义
+
+## Oauth
+开放授权
+概述
+三方登入主要基于Oauth2.0，Oauth协议为用户资源的授权提供了一个安全的，开放而又简单的标准，与以往的授权方式不同之处是OAuth的授权不会使第三方触及到用户的账号信息(如用户名和密码), 即第三方无需使用用户的用户名与密码就可以申请获得该用户资源的授权，因此OAuth是安全的。
+
+流程:
+1. 选择授权方式，发送请求
+2. 接口响应02，重定向到第三方网站，传入一个callback回调地址
+3. 用户在第三方网站点击授权，接口返回302，重定向回来，url携带参数code
+4. 通过code获取token
+5. 通过token获取到需要的用户信息
+
+## RESTFUL API
+Representational State Transfer 翻译过来就是表现层状态转换，它是一种互联网软件的架构原则，因此符合rest风格的web api设计，就称它为restful api
+特性
+- 每一个uri代表一种资源
+- 客户端和服务端之间，传递这种资源的某种表现层
+- 客户端通过http动词，对服务器端进行操作，实现 表现层状态转化
+
+URL设计
+http动词
+-GET
+读取
+-POST
+新建
+-PUT
+更新
+-PATCH
+部分更新
+-DELETE
+删除
+
+```
+// 推荐
+GET /users
+// 不推荐
+GET / getUsers;
+```
+通常是复数
+
+```
+// 推荐
+GET /users
+GET /users/1
+// 不推荐
+GET / user;
+GET /user/1
+```
+
+避免多级
+```
+// 推荐
+GET /authors/12?categroies=2
+// 不推荐
+GET /authors/12/categories/2;
+```
+
+状态码精确
+1xx：相关信息
+2xx：操作成功
+3xx：重定向
+4xx：客户端错误
+5xx：服务器错误
+xxx：自定义
+
+接口返回json
+Accept: application/json
+错误时不要返回200状态码
+
+## 图形验证码
+trek-captcha
+```
+npm i trek-captcha -s
+const captcha = require('trek-captcha');
+const { token, buffer } = await captcha({size: 4})
+```
+
+## PWA
+webapp用户体验差，不能离线访问，用户粘性低，pwa就是为了解决这一系列问题，让webapp具有快速，可靠，安全等特点。但是兼容性较差。
+
+## PWA用到的技术
+- web app manifest
+图标添加
+- service worker
+缓存机制
+- push api & notification api
+消息通知
+- app shell & app skeleton
+
+## Web App Manifest 设置
+安卓支持比较好
+```
+<link rel="manifest" href="/manifest.js">
+{
+    "name": "应用名称",
+    "short_name": "桌面应用名称",
+    "display": "standalone", // fullScreen(standalone) minimal-ui browser
+    "start_url": "打开时的网址",
+    "icons": [], // 设置桌面图片的icon图标，修改图标需要重新添加到桌面，[{src, sizes, type}]，[{"src": "", "sizes": "144x144", type: "image/png"}] 默认144 * 144
+    "background_color": "#aaa", // 启动画面颜色
+    "theme_color": "#aaa" // 状态栏颜色
+}
+```
+ios需要使用meta来设置
+```
+// 图标
+<link rel="apple-touch-icon" href="apple-touch-iphone.png">
+// 添加到主屏后的标题和short_name一致
+<link rel="apple-mobile-web-app-title" content="标题">
+// 隐藏safari地址栏 standalone模式下默认隐藏
+<link rel="apple-mobile-web-app-capable" content="yes">
+// 设置状态栏颜色
+<link rel="apple-mobile-web-app-status-bar-style" content="black-translucent">
+```
+横幅安装: 用户在浏览器中访问至少两次，两次访问间隔至少时间为5分钟(safari不支持横幅)
+
+## 运行环境
+1、localhost
+2、https
+只支持以上两种环境
+
+如果不安装service Worker 则无法添加图标
+
+## Service Worker
+- 不能访问/操作dom
+- 会自动休眠，不会随浏览器关闭所失效(必须手动卸载)
+- 离线缓存内容开发者可控
+- 必须在https或者localhost下使用
+- 所有api都基于promise
+
+生命周期:
+installing: 安装阶段
+installed: 安装完成阶段
+activating: 激活中
+activated: 激活完成
+redundant: 废弃
+
+script 的代码
+```
+window.addEventListener('load', function() {
+    // 解决离线缓存的问题 缓存 把缓存取出来
+    if ('serviceWorker' in navigator) { // 判断当前浏览器是否支持serviceWorker
+        navigator.serviceWorker.register('/sw.js').then(function(resgisteration) {
+            console.log(resgisteration);
+        })
+    }
+});
+```
+
+sw.js的代码
+```
+// 无window对象，采用self代替
+
+const CACHE_NAME = 'cache_v' + 1; // 默认情况，sw文件变化后，会重新注册serviceWorker
+const CACHE_LIST = [
+    '/',
+    '/index.html',
+    '/index.css',
+    '/main.js',
+    '/api/img'
+]
+
+function fetchAddSave(request) { // 数据获取后 进行缓存
+    // 如果请求到了 需要更新缓存
+    return fetch(request).then(res => { // res 是流文件
+        // 更新缓存
+        const r = res.clone(); // res必须克隆，因为使用一次就销毁
+        caches.open(CACHE_NAME).then(cache => {
+            chache.put(request, res);
+        })
+        return res;
+    });
+}
+
+// 监听fetch，只要拦截到请求就会走这里
+self.addEventListener('fetch', function(e) { // 线程中不能发送ajax，可以使用fetch
+    // 如果联网 发送请求，如未联网，
+    if (e.request.url.includes('/api/')) { // 请求的是接口
+        return e.respondWith(
+            fetchAddSave(e.request).catch(err => {
+                return caches.open(CACHE_NAME).then(cache => chche.match(e.request))
+            })
+        )
+    }
+    // 缓存策略 缓存优先，网络优先
+    console.log(e.request.url);
+    e.respondWith( // 用什么内容 返回当前请求
+        fetch(e.request).catch(err=> {
+            // 打开缓存，把缓存中匹配的结果返回回去
+            return caches.open(CACHE_NAME).then(cache => chche.match(e.request))
+        })
+    )
+});
+// 缓存，需要缓存内容
+function preCache() { // 需要返回一个promise
+    // 开启一个缓存空间
+    return caches.open(CACHE_NAME).then(function(cache) {
+        return cache.addAll(CACHE_LIST);
+    })
+}
+self.addEventListener('install', function(e) {
+    // 如果上一个serviceWorker不销毁，需要树洞skipWating
+    console.log('install');
+    e.waitUntil(
+        preCache().then(skipWaiting)
+    ) // 等待promise执行那个完成
+});
+// 激活当前serviceWorker，让service立即生效 self.clients.claim
+function clearCache() {
+    return caches.keys().then(function(keys) {
+        return Promise.all(keys.map(function(key) {
+            if (key !== CACHE_NAME) {
+                return caches.delete(key);
+            }
+        }));
+    })
+}
+// 当前serviceWorker安装完毕之后，删除之前的缓存
+self.addEventListener('activate', function(e) {
+    console.log('activate');
+    e.waitUntil(
+        Promise.all([
+            clearCache(),
+            self.clients.claim()
+        ])
+    )
+})
+
+```
+
+服务器代码:
+
+```
+const http = require('http');
+const fs = require('fs');
+const URL = require('url');
+
+http.createServer((req, res) => {
+    let { pathname } = URL.parse(req.url, true);
+    const mime = {
+        js: 'text/javascript',
+        html: 'text/html',
+        ico: 'image/ico'
+    }
+    console.log(pathname);
+    try {
+        fs.readFile(`.${pathname}`, (err, data) => {
+            if (err) {
+                return res.end();
+            }
+            res.writeHead(200, {'Content-type' : mime[pathname.split('.')[1]]});
+            res.write(data);
+            return res.end();
+        })
+    } catch (error) {
+        return res.end();
+    }
+}).listen(8080);
+```
+
+serviceWorker 需要拦截我们的客户请求，如果可以通畅，正常请求，如果网络不通，则走缓存
+添加主屏幕，两次访问，间隔5分钟 会弹出横条
+手动点击是没有问题的
+
+## 缓存策略
+- cechefirst
+缓存优先
+- cacheonly
+仅缓存
+- networkfirst
+网络优先
+- networkonly
+仅网络
+- StateWhileRevalidate
+从缓存取，用网络数据更新缓存
+
+## workbox
+pwa的库

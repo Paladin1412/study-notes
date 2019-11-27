@@ -269,8 +269,10 @@ const http = require('http');
 const server = http.createServer((request, response) => {
     // request 为请求数据
     // response 为响应数据
+    // 设置返回值类型
+    res.writeHead(200, {'Content-type' : 'text/html'});
     response.write = 'server start';
-    response.end(); // 结束
+    return response.end(); // 结束
 });
 server.listen(3000); // 服务监听的端口号
 ```
