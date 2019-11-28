@@ -89,14 +89,170 @@ export function createRouter() {
     })
 }
 ```
+CSR 和 SSR 统一入口
+```
+import Vue from 'vue';
+import App from './app.vue';
+import { createRouter } from './router';
 
+export function createApp(context) {
+    const router = createRenderer();
+    const app = new Vue({
+        router,
+        context,
+        render: h => h(App)
+    })
+    return { app, router };
+}
+```
+
+CSR的main.js
+```
+import { createApp } from './createapp';
+const { app, router } = createApp();
+router.onReady(() => {
+    app.$mount('#app')
+})
+```
+
+SSR的entry-server.js
+
+```
+import { createApp } from './createapp';
+export default context => {
+    return new Promise((resolve, reject) => {
+        const { app, router } = createApp(context);
+        router.push(context.url);
+        router.onReady(() => {
+            resolve(app);
+        }, reject)
+    })
+}
+```
+服务端渲染，我们需要能够处理vue组件，所以需要webpack的支持
+
+后端加入webpack
+npm install cross-env vue-server-renderer webpack-noe-externals lodash.merge --save
+
+```
+const VueSSRServerPlugin = require('vue-server-renderer/server-plugin');
+const VueSSRClientPlugin = require('vue-server-renderer/client-plugin');
+const nodeExternals = require('webpack-node-externals');
+const merge = require('lodash.merge');
+const TARGET_NODE = process.env.WEBPACK_TARGET === 'node';
+const target = TARGET_NODE ? 'server' : 'client';
+
+module.exports = {
+    css: {
+        extract: false,
+    },
+    configureWebpack: () => ({
+        entry: TARGET_NODE ? `./src/entry-${target}.js` : `./src/main.js`,
+        devtoll: 'source-map',
+        target: TARGET_NODE ? 'node' : 'web',
+        node: TARGET_NODE ? undefined: false,
+        output: {
+            libraryTarget: TARGET_NODE ? 'commonjs2' : undefined
+        },
+        externals: TARGET_NODE ? nodeExternals({
+            whitelist: [/\.css$/]
+        }) : undefined,
+        optimization: {
+            splitChunks: undefined,
+        },
+        plugins: [TARGET_NODE ? new VueSSRServerPlugin() :  new VueSSRClientPlugin()],
+    }),
+    chainWebpack: config => {
+        config.module.rule('vue').use('vue-loader').tap(options => {
+            merge(options, {
+                optimizeSSR: false
+            })
+        })
+    }
+}
+
+// server.js
+const fs = require('fs');
+const express = require('express');
+const app = express();
+// 开放dist目录
+app.use(express.static('./dist'));
+// 获得一个createBundleRenderer
+const { createBundleRenderer } = require('vue-server-renderer');
+const bundle = require('./dist/vue-ssr-server-bundle.json');
+const clientManifest = require('./dist/vue-ssr-client-manifest.json');
+
+const renderer = createBundleRenderer(bundle, {
+    runInNewContext: false,
+    template: fs.readFileSync('./src/index.temp.html', 'utf-8'),
+    clientManifest: clientManifest,
+});
+function renderToString(context) {
+    return new Promise((resolve, reject) => {
+        renderer.renderToString(context, (err, html) => {
+            resolve(html);
+        })
+    })
+}
+
+app.get('*', async (req, res) => {
+    console.log(req.url, 123);
+    const context = {
+        title: 'ssr test',
+        url: req.url,
+    }
+    const html = await renderToString（context);
+    res.send(html);
+})
+
+const port = 3001;
+app.listen(port, function() {
+    console.log('server start at localhost:' + port)
+})
+```
+
+nuxt.js
+https://zh.nuxtjs.org/guide/
+自己折腾太麻烦，还好有nuxt，内置vuex vue-router,ssr最佳实践框架
+- 新建目录
+npm install nuxt --save;
+- 新增script
+```
+"script": {
+    "dev": "nuxt"
+}
+```
+nuxt遵循云顶由于配置，我们新建pages目录，就是页面了
+mkdir pages
 
 react的服务端渲染
+```
+import express from 'express';
+import React from 'react';
+import { renderToString } from 'react-dom/server';
+import App from './App';
 
+const app = express();
+// renderToString 把虚拟DOM转化为真实DOM的关键方法
+const RDom = renderToString(<App />);
+// 编写HTML模板，插入转化后的真实DOM内容
+const Page = `
+            <!DOCTYPE html>
+            <html lang="en">
+                <head>
+                    <title>Hello</title>
+                </head>
+                <body>
+                    ${RDom}
+                </body>
+            </html>
+`
+app.get('/index', function(req, res) {
+    res.send(Page);
+});
+const server = app.listen(8080);
+```
 
-3. 前端安全
-4. 网络安全
-5. 性能优化
-6. 单元测试
-7. 前端工程化
+## 数据持久化
 
+## redis
