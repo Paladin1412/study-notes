@@ -263,7 +263,7 @@ nodejs中实现持久化的多种方法。
 #### 文件系统数据库
 ```
 const fs = require('fs');
-functiton get(key) {
+function get(key) {
     fs.readFile('./db.json', (err, data) => {
         const json = JSON.parse(data);
         console.log(json[key]);
@@ -713,4 +713,261 @@ $push: { tages: { $each: ['上火', '真香'], $slice: -3 }}
 ```
 - 聚合操作符：使用aggergate 方法，使文档顺序通过管道阶段从而得到最终结果
 Collection
+```
+// 聚合管道阶段: $group, $count, $sort, $skip, $limit, $project 等
+// 分页查询
+r = await fruitsColl.aggregate([ {$sort: { price: -1}}, {$skip: 0}, {$limit: 2}]).toArray();
+// 投射: 值选择name, price并排除_id
+fruitsColl.aggregate([..., {$project: {name: 1, price: 1, _id: 0}}]).toArray();
+// 集合管道操作符，$add, $avg, $sum等
+// 按name字段分组，统计组内price总和
+fruitsColl.aggregate([ { $group: {_id: '$name', total: {$sum: '$price'}}}]).toArray();
+```
+常用聚合管道阶段操作均有对应的单个方法，通过Cursor调用
+await fruitsColl.find().count();
+await fruitsColl.find().sort({price: -1}).skip(0).limit(2).project({name: 1, price: 1}).toArray();
 
+### 
+ODM - Mongoose
+概述: 优雅的NodeJs对象文档模型object document model, Mongoose有两个特点
+- 通过关系型数据库的思想来设计非关系型数据库
+npm install mongoose -S
+```
+const mongoose = require('mongoose');
+// 链接
+mongoose.connect('mongodb://127.0.0.1:27017/test', { useNewUrlParser: true });
+const conn = mongoose.connection;
+conn.on('error', () => {
+    console.log('链接数据库失败');
+})
+conn.once('open', async () => {
+    // 定义个Schema - Table
+    const Schema = mongoose.Schema({
+        category: String,
+        name: String
+    })
+    // 编译一个Model, 他对应数据库中复数，小写的collection
+    const Model = mongoose.model('fruit', Schema);
+    try {
+        // 创建 create 返回Promise
+        let r = await Model.create({
+            category: '温带水果',
+            name: '苹果',
+            price: 5
+        })
+        console.log('插入数据', r);
+        // 查询，find返回Query, 他实现了then和catch，可以当promise使用
+        // 如果需要返回Promise，调用exec()
+        r = await Model.find({name: '苹果'});
+        console.log('查询结果', r);
+        // 更新， updateOne 返回Query
+        r = await Model.updateOne({ name: '苹果'}, { $set: { name: '芒果'}});
+        console.log('更新结果', r);
+        // 删除，deleteOne 返回Query
+        r = await Model.deleteOne({ name: '苹果'});
+        console.log('删除结果', r);
+    } cache (error) {
+        console.log(error);
+
+    }
+})
+```
+
+Mongoose 中各盖面和关系数据库，文档数据库对应关系
+| Oracle | MongoDB | Mongoose
+|--|--|--
+|数据库实例(database instance)| MongoDB实例| Mongoose
+|模式(schema)|数据库(database)|mongoose
+|表(table)|集合(collection)|模板(Schema) + 模型(Model)
+|行(row)|文档(document)|实例(instance)
+|rowid|_id|_id
+|Join|DBRef|DBRef
+
+- Schema
+字段定义
+```
+const blogSchema = mongoose.Schema({
+    title: { type: String, require: [true, '标题为必填项']}, // 定义检验规则
+    author: String,
+    body: String,
+    comments: [{body: String, date: Date }], // 定义对象数组
+    date: { type: Date, default: Date.now }, // 指定默认值
+    hidden: Boolean,
+    meta: {
+        votes: Number, // 定义对象
+        favs: Number
+    }
+})
+// 定义多个索引
+blogSchema.index({ title: 1, author: 1, date: -1});
+const BlogModel = mongoose.model('blog', blogSchema);
+const blog = new BlogModel({
+    title: 'nodejs持久化',
+    author: 'jerry',
+    body: '....'
+})
+const r = await blog.save();
+console.log('新增blog', r);
+```
+可选字段类型:
+String
+Number
+Date
+Buffer
+Boolean,
+Mixed
+ObjectId
+Array
+避免创建索引警告
+```
+mongoose.connect('mongodb://127.0.0.1:27017/test', {
+    useCreateIndex: true
+})
+```
+- 定义实例方法: 抽象出常用方法便于复用
+```
+// 定义实例方法
+blogSchema.methods.findByAuthor = function() {
+    return this.model('blog').find({ author: this.author }).exec();
+}
+// 获得模型实例
+const BlogModel = mongoose.model('blog', blogSchema);
+const blog = new BlogModel({...});
+// 调用实例方法
+r = await blog.findByAuthor();
+console.log('findByAuthor', r);
+
+```
+实例方法还需要定义实例，用起来较为繁琐，可以使用静态方法
+- 静态方法
+```
+blogSchema.statics.findByAuthor = function(author) {
+    return this.model('blog').find({ author }).exec();
+}
+r = await BlogModel.findByAuthor('jerry');
+console.log('findByAuthor', r);
+```
+- 虚拟属性
+```
+blogSchema.virtual('commentsCount').get(function() {
+    return this.comments,length;
+})
+let r = await blog.findOne({ author: 'jerry' });
+console.log('blog留言数', r.commentsCount);
+```
+## 购物车相关接口实现
+- 用户模型，./models/user.js
+```
+const mongoose = reuqire('mongoose');
+const schema = mongoose.Schema({
+    name: String, 
+    password: String, 
+    cart: []
+});
+schema.statics.getCart = function(_id) {
+    return this.model('user').findById(_id).exec();
+}
+schema.statics.setCart = function(_id, cart) {
+    return this.model('user').findByIdAndUpdate(_id, { $set: { cart }}).exec();
+}
+const model = mongoose.model('user', schema);
+// 测试数据
+model.updateOne(
+    {_id: 'sfsfsdfsada'},
+    { name: 'jerry', cart: [{ pname: 'iphone', price: 666, count: 1}]},
+    { upset: true },
+    (err, r) => {
+        console.log('测试数据');
+        console.log(err, r);
+    }
+)
+module.exports = model;
+```
+API编写，./cart.js
+```
+const express = require('express');
+const app = express();
+const bodyParser = require('body-parser');
+// 数据库相关
+require('./mongoos');
+const UserModel = require('./models/user');
+// mock session
+const session = { sid: { userId: 'fhsjfsjdhakda' }};
+app.use(bodyParser.json());
+// 查询购物车数据
+app.get('/api/cart', async (req, res) => {
+    const data = await UserModel.getCart(session.sid.userId);
+    res.send({ ok: 1, data });
+})
+// 设置购物车数据
+app.post('/api/cart', async (req, res) => {
+    await UserModel.setCart(session.sid.userId, req.body.cart);
+    res.send({ok: 1});
+})
+app.listen(3000);
+```
+
+### Redis
+功能
+- 缓存系统
+- 数据存储
+- 消息中介
+工具
+- 服务启动工具
+- 命令行
+- GUI
+基本用法
+- 启动 redis-server
+- 安装 node-redis: npm install redis
+- 基本用法
+```
+const redis = require('redis');
+const client = redis.createClient(6379, '127.0.0.1');
+// 设置
+client.set('hello', 'this is a value', redis.print);
+// 读取
+client.get('hello', function(err, v) {
+    console.log('redis get hello:', v);
+});
+// 写入json
+client.set('json', JSON.stringify({ name: 'jerry', age: 22}), redis.print);
+client.get('json', function(err, v) {
+    console.log('redis get json:', JSON.parse(v));
+});
+```
+- 列表 -List
+```
+// 先清除数据
+client.del('testLists');
+client.rpush('testLists', 'a');
+client.rpush('testLists', 'b');
+client.rpush('testLists', 'c');
+client.rpush('testLists', 'd');
+client.rpush('testLists', 'e');
+client.lpop('testLists', function(err, v) {
+    console.log('client.lpop', v);
+});
+client.lrange('testLists', 0, -1, function(err, lists) {
+    console.log('client.lrange:', lists);
+})
+```
+- 集合 - Set
+```
+client.sadd('testSet', 1);
+client.sadd('testSet', 'a');
+client.sadd('testSet', 'bb');
+// 不可重复
+client.sadd('testSet', 'bb');
+client.smembers('testSet', function(err, v){
+    console.log('client.smembers', v);
+})
+```
+- 消息中介: 发布订阅
+```
+client.subscribe('testPublish');
+client.on('message', function(channel, msg) {
+    console.log('client.on message, channel:', channel, msg)；
+})
+const client2 = redis.createClient(6379, '127.0.0.1');
+client2.publish('testPublish', 'message from publisher');
+```
