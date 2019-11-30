@@ -607,5 +607,110 @@ mongodb 原生驱动
 npm install mongodb --save
 链接mongodb
 ```
-
+// 客户端
+const MongoClient = require('mongodb').MongoClient;
+// 链接URL
+const url = 'mongodb://1270.0.1:27017';
+// 数据库名
+const dbName = 'test';
+(asycn function() {
+    // 创建客户端
+    const client = new MongoClient(url, { useNewUrlParser: true });
+    try {
+        // 链接数据库，返回promise
+        await client.connect();
+        console.log('链接成功')；
+        // 获取数据库
+        const db = client.db(dbName);
+        // 获取集合
+        const fruitsColl = db.collection('fruits');
+        // 插入文档，返回Promise<CommandResult>
+        let r = await fruitsColl.insertOne({ name: '芒果', price: 20.0 });
+        console.log('插入成功', r.result);
+        // 查询文档
+        r = await fruitsColl.findOne();
+        console.log('查询结果', r);
+        // 更细文档，返回Promise<CommandResult>
+        r = await fruitsColl.updateOne({ name: '芒果'}, { $set: { name: '苹果'} })；
+        console.log('更新成功', r.result);
+        // 删除文档
+        r = await fruitsColl.deleteOne({ name: '苹果'});
+        console.log('删除成功', r.result);
+    } catch (err) {
+        console.log(err);
+    }
+    client.close();
+})();
 ```
+
+- 查询操作符，提供多种方式定位数据库数据
+```
+// 比较 $eq, $gte, $in等
+await fruitsColl.find({ price: {$gt: 10}})
+// 逻辑$and, $nor, $or
+// price > 10 或 price < 5
+await fruitsColl.find({$or: [{price: { $gt: 10}}, { price: {$lt: 5}}]})
+// price 不大于10 且 price 不小于5
+await fruitsColl.find({ $nor: [price: {$gt: 10}, {price: {$lt: 5}}]})
+// 元素$exits, $type
+await fruitsColl.insertOne({ name: '芒果', price: 20.0, stack: true});
+await fruitsColl.find({ stack: {$exists: true }});
+// 模拟$regex, $text, $expr
+await fruitsColl.find({ name: {$regex: /芒/}});
+await fruitsColl.createIndex({ name: 'text'}) // 验证文本抖索须首先对字段加索引
+await fruitsColl.find({$text: {$search: '芒果'}}) // 按词搜索，单独字查询不出结果
+// 数组$all, $elemMatch, $sequelize
+fruitsColl.insertOne({..., tags: ['热带', '甜']}) // 插入带标签数据
+// $all: 查询指定字段包含所有指定内容的文档
+await fruitsColl.find({ tags: {$all: ['热带', '甜']}})
+// $elemMatch: 指定字段数组中至少有一个元素满足所有查询规则
+fruitsColl.insertOne({ hisPrice: [20, 25, 30]) // 数据准备
+fruitsColl.find({ hisPrice: { $elemMatch: {$gt: 24, $lt: 26}}}) // 历史价位有没有出现在24 - 26之间
+// 地理空间 $geoIntersects, $geoWithin, $near, $nearSphere
+// 创建 stations集合
+const stations = db.collection('stations');
+// 添加测试数据，执行一次即可
+await stations.insertMany([
+    { name: '天安门东', loc: [116.407851, 39.91408]},
+    { name: '天安门西', loc: [116.398056, 39.913723]},
+    { name: '王府井', loc: [116.417809, 39.91435]}
+]);
+await stations.createIndex({ loc: '2dsphere'});
+r = await stations.find({
+    loc: {
+        $nearSphere: {
+            $geometry: {
+                type: 'Point',
+                coordinates: [116.403846, 39.915525]
+            },
+            $maxDistance: 1000
+        }
+    }
+}).toArray();
+console.log('天安门附近地铁站', r);
+```
+- 更新操作符，可以修改数据库数据或添加附件数据
+// 字段相关: $set, $unset, $setOnInsert, $rename, $inc, $min, $max, $mul
+// 更新多个字段
+```
+await fruitsColl.updateOne(
+    { name: '芒果'},
+    { $set: { price: 19.8, category: '热带水果'}},
+)
+// 更新内嵌字段
+{ $set: { ..., area: { city: '三亚'}}}
+// 数组相关 $, $[]. $addToSet, $pull, $pop, $push, $pushAll
+// $push 用于新增
+insertOne({ tags: ['热带'， '甜']}) // 添加tags数组字段
+fruitsColl.updateMany({name: '芒果'}, { $push: { tags: '上火'}})
+// $push, $pushAll用于删除符合条件项，$pop删除首项 -1 或尾项1
+fruitsColl.updateMany({name: '芒果'}, { $pop: { tags: 1}});
+fruitsColl.updateMany({name: '芒果'}, { $pop: { tags: 1}});
+// $, $[] 用于修改
+fruitsColl.updateMany({name: '芒果', tags: '甜'}, { $set: {'tags.$': '香甜'}})
+// 修改器，常结合数组操作符使用: $each, $position, $slice, $sort
+$push: { tages: { $each: ['上火', '真香'], $slice: -3 }}
+```
+- 聚合操作符：使用aggergate 方法，使文档顺序通过管道阶段从而得到最终结果
+Collection
+
