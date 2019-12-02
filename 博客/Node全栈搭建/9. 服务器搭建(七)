@@ -153,10 +153,237 @@ if (self == top) {
 
 - SQL注入
 ```
+// 填入特殊密码
+1 'or'1'='1
+// 拼接后的SQL
+SELECT * FROM test.user WHERE username='3123213213' AND password = '1'or'1'='1'
 ```
+防御
+所有的查询语句建议使用数据库提供的参数化查询接口**，参数化的语句使用参数而不是将用户输入变量嵌入到SQL语句中，既不要直接拼接SQL语句，例如Node.js中的mysqljs库的query方法中的，占位参数
+```
+// 错误写法
+const sql = `
+    SELECT * FROM test.user WHERE username='${ctx.request.body.username}'
+    AND password = '${ctx.request.body.password}'
+`
+console.log(sql);
+res.await query(sql);
+// 正确写法
+const sql = `
+    SELECT * FROM test.user
+    WHERE username = "
+    AND password = ?
+`
+console.log(sql);
+res = await query(sql, [ctx.request.body.username, ctx.request.body.password])
+```
+1. 严格限制web应用的数据库的操作权限**，给此用户提供仅仅能够满足其工作的最低权限，从而最大限度的减少注入攻击对数据库的危害
+2. 后端代码检查输入的数据是否符合预期**，严格限制变量的类型，例如使用正则表达式进行一些匹配处理。
+3. 对进入数据库的特殊字符(',",\,<,>,&,*,;)等，进行转译处理，或编码转换**。基本上所有的后端语言都有对字符串进行转译处理的方法，比如lodash的lodash._escapehtmlchar库
+
+- OS命令注入
+OS命令注入和SQL注入差不多，只不过SQL注入的是针对数据库的，而OS命令注入是针对操作系统的，OS命令注入攻击指通过web应用，执行非法的操作系统命令达到攻击的目的，只要在能调用shell函数的地方就有存在被攻击的风险，倘若电泳shell时存在疏漏，就可以执行插入的非法命令。
+```
+// 以Node.js为例，加入在接口中需要从 github 下载用户指定的repo
+const exec = require('mz/child_process').exec;
+const params = { /* 用户输入的参数 */};
+exec(`git clone ${params.repo}/some/path`);
+```
+如果传入的参数如下会怎样
+```
+https://github.com/xx/xx.git && rm -rf /* &&
+```
+- 请求劫持
+1. DNS劫持
+顾名思义，DNS服务器(DNS解析各个步骤)被篡改，修改了域名解析的结果，使得访问到的不是预期的ip
+2. HTTP劫持运营商劫持，此时大概只能升级HTTPS了
+
+- DDOS
+DDOS不是一种攻击，而是一大类攻击的总称，他有几十种类型，新的攻击方法还在不断发明出来，网站运行的各个环节，都可以是攻击目标。只要把一个环节攻破，使得整个流程跑不起来，就达到了瘫痪服务的目的。
+其中比较常见的一种攻击是CC攻击。他就是简单粗暴的送来大量正常的请求，超出服务器的最大承受量，导致宕机，我遭遇的就是CC攻击，最多的时候全世界大概20多个IP地址轮流发出请求，每个地址的请求在每秒200 ~ 300次，我看访问日志的时候，就觉得那些请求像洪水一样涌来，一眨眼就是一大堆，几分钟的时间，日志文件的体积就大了100MB, 说实话，这是能算小攻击，但是我的个人网站没有任何防护，服务器还是跟其他人共享的，这种流量一来立刻就下线了。
+
+防御手段
+1. 备份网站
+备份网站不一定是全功能的，如果能做到全静态浏览，就能满足需求，最低限度应该可以显示公告，告诉用户，网站除了问题，正在全力抢救。
+2. HTTP 请求拦截
+硬件 服务器 防火墙
+3. 宽带扩容 + CDN
+提高犯罪成本
 
 ## 防御手段
+1. 密码强化
+2. 人机识别
+3. HTTPS
+4. 浏览器安全控制
+5. CPS(Content-Security-Policy)
+- 密码安全
+1. 泄露渠道
+    数据库被偷
+    服务器被入侵
+    通讯被窃听
+    内部人员泄露
+    其它网站(撞库)
+2. 防御
+    严禁铭文存储
+    单向变换
+    变化复杂度要求
+    密码复杂度要求
+    加盐(防拆解)
+3. 哈希算法
+    明文-密文: 一一对应
+    雪崩效应: 明文小幅度变化，密文剧烈变化
+    密文 - 明文无法反推
+    密文固定长度 md5, sha1, sha256
+4. 密码传输安全
+    https传输
+    频次限制
+    前端加密意义有限 - 传输层加密 不会泄露 但不代表不能登录
+5. 摘要加密的复杂度
+    md5反查
+6. 两次MD5是否可取
+7. 和只加盐好不好
+8. 中间的字符串的作用
+```
+// passwordjs
+const md5 = function(str) {
+    const crypto = require('crypto');
+    const md5Hash = crypto.createHash('md5');
+    md5Hash.update(str);
+    return md5Hash.digest('hex');
+}
+const encryptPassword = function(salt, password) {
+    return md5(salt + 'adfsf@34#%^&*323@' + password);
+}
+const psw = '1111';
+console.log('password', psw);
+console.log('password', encryptPassword('123', psw));
 
+module.exports = encryptPassword;
+
+// const md5 = str => crypto.createHash('md5').update(str).digest('hex')
+
+// index.js
+const encryptPassword = require('./password');
+// 加盐过程
+if (res.length !== 0 && res[0].salt === null) {
+    console.log('no salt');
+    if (password === res[0].password) {
+        // 加盐
+        sql = `
+            update test.user
+            set salt = ? ,
+            password = ?
+            where username = ?
+        `
+        const salt = Math.random() * 999999 + '' + Date.now();
+        console.log('salt:', salt);
+        console.log('username: ', username);
+        res = await query(sql, [salt, encryptPassword(salt, password), username])
+
+        console.log('update', res);
+        ctx.session.username = ctx.request.body.username;
+        ctx.redirect('/?from=china')
+    }
+} else {
+    if (encryptPassword(res[0].salt, password) {
+        ctx.session.username = ctx.request.body.username;
+        ctx.redirect('/?from=china');
+    })
+}
+```
+
+- 人机验证 与验证码
+前端向服务发送验证码，请求服务，服务随机生成验证码抠图，返回给前端渲染，前端传入滑动距离值，前端向风控服务器反馈滑动行为，页面行为。风控服务器进行风险处理。
+滑动验证码实现原理
+1. 服务端随机生成抠图和带有抠图阴影的背景图片，服务端保存随机抠图位置坐标：
+2. 前端实现滑动交互，将抠图拼接在抠图阴影之上，获取用户滑动距离值；
+3. 前端将用户滑动距离值传入服务端，服务端校验误差是否在容许范围内
+备注说明: 单纯校验用户滑动距离是最基本的校验，处于更高安全考虑，可以考虑用户滑动整个轨迹，用户在当前页面上的行为等，可以将其细化复杂地步，可以根据实际情况设计，亦或借助用户行为数据分析模型，最终的目标都是增加非法的模拟和绕过的难度。
+
+- HTTPS的配置
+http的弱点
+浏览器 - 代理服务器 - 链路 - 服务器
+传输链路窃听篡改
+```
+// 查看经过的节点
+traceroute www.baidu.com
+```
+危害
+1. 窃听
+    密码 敏感信息
+2. 篡改
+    插入广告 重定向到其它网站(js 和 head 头)
+时代趋势
+1. 目前全球互联网正在从HTTP向HTTPS的大迁移
+2. Chrome和火狐浏览器将对不采用HTTPS加密的网站提示不安全
+3. 苹果要求所有APP通信都必须采用HTTPS加密
+4. 小程序强制要求服务器端使用HTTPS请求
+特点
+1. 保密性-防泄密
+2. 完整性-防篡改
+3. 真实性-防假冒
+HTTP + SSL = HTTPS
+
+什么是SSL证书
+SSL证书是由浏览器中 受信任的根证书颁发机构 在验证服务器身份后颁发，具有网站身份验证和加密传输双重功能
+
+密码学
+1. 对称加密
+对称加密的一大缺点是密钥的管理与分配，换句话说，如何把密钥发送到需要解密你的消息的人的手里事一个问题，在发送密钥的过程中，密钥有很大的风险会被黑客们拦截，现实中通常的做法是将对称加密的密钥进行非对称加密，然后传送给需要它的人。
+DES
+2. 非对称加密
+    产生一对密钥
+    公钥负责加密
+    私钥负责解密
+    私钥无法解开说明公钥无效-抗抵赖
+    计算复杂，对性能有影响，极端情况下1000倍
+常见算法 RSA(大质数)，Elgamal, 背包算法，Rabin, D-H, ECC(椭圆曲线加密算法)
+
+RSA原理
+只能被1和本身整除额数叫质数，例如13，质数是无穷多的，得到两个巨大质数的乘积是简单的事，但想从该乘积反推出这两个巨大质数却没有任何有效的办法，这种不可逆的单向数学关系，是国际数学界公认的质因数分解难题，R,S,A三人巧妙的利用这一假说，设计出RSA公钥加密算法的基本原理:
+    1. 让计算机随机生成两个大质数p和q，得出乘积n
+    2. 利用p和q有条件的生成加密密钥e
+    3. 通过一系列计算，得到与n互为质数的解密密钥d，置于操作系统才知道的地方；
+    4. 操作系统将n和e作为公钥对外发布，将私钥d秘密保存，把初始质数p和q秘密丢弃，国际数学和密码学界已证明，企图利用公钥和密文推断出明文-或者企图利用公钥推断出私钥的难度等同于分解两个巨大质数的积。这就是Eve不可能对Alice的密文解密以及公钥可以在网上发布的原因，至于巨大质数要多大才能保证安全的问题不用担心，利用当前可预测的计算能力，在十进制下，分解两个250位质数的积要用数十万年的时间；并且质数用尽或两台计算机偶然使用相同质数的概率小到可以被忽略。
+
+- SSH公钥登录原理
+1. 密码口令登录
+通过密码进行登录，只要流程为
+    
+2. 公钥登录
+3. 
+
+
+## 爬虫与反爬技术
+- 爬虫
+使用cheerio与http/https
+```
+const cheerio = require('cheerio');
+const https = require('https');
+let html = '';
+const $ = '';
+https.get('url', res => {
+    res.on('data', data => {
+        html += data;
+    });
+    res.on('finish', () => {
+        $ = cheerio.load(html);
+        // some code
+    })
+})
+```
+puppeter 无头浏览器
+https://github.com/su37josephxia/imooc-data-analysis
+
+- 反爬技术
+1. User-Agent, Referer, 验证码
+2. 单位时间的访问次数，访问量
+3. 关键信息用图片混淆
+4. 异步加载
+5. 前端技术限制
+ 字体乱序加密技术
+ 将网站的重要字体，将html部分生成图片
+ 反爬的最高境界就是Canvas的指纹
 
 1. 性能优化
 2. 单元测试
