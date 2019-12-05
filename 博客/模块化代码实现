@@ -21,4 +21,18 @@ ReferenceError: window is not defined
     at bootstrapNodeJSCore (internal/bootstrap/node.js:752:3)
 ```
 
-可以发现
+可以发现, 函数中包含exports, require, module, __filename, __dirname参数
+
+node 实现模块化, 特点: 命名冲突，代码方便维护，方便协作
+浏览器中实现模块化 var obj = {}; 不能完全解决命名冲突，调用过长，单例
+自执行函数实现 seajs cmd requirejs amd (异步)
+commonjs规范，通过文件读取，(utf8)实现了模块化
+
+```
+let a = (function() {
+    module.exports = Promise;
+    return module.exports;
+})();
+```
+文件就是模块，每个模块外面会自动套一个函数，并且定义了导出方式 module.exports, exports;
+定义了导入方式， require
