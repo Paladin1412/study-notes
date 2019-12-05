@@ -1,0 +1,24 @@
+1. node 中模块化的实现
+node在所有的模块外侧包了一层函数，假设我们手动让node的第一行报错，比如在js中第一行书写如下代码
+```
+console.log(window);
+```
+通过node执行该文件，会发现报错信息如下。
+请使用系统控制台执行命令
+```
+(function (exports, require, module, __filename, __dirname) { console.log(window);
+                                                                          ^
+
+ReferenceError: window is not defined
+    at Object.<anonymous> (/Users/choice/Desktop/node/main.js:1:75)
+    at Module._compile (internal/modules/cjs/loader.js:689:30)
+    at Object.Module._extensions..js (internal/modules/cjs/loader.js:700:10)
+    at Module.load (internal/modules/cjs/loader.js:599:32)
+    at tryModuleLoad (internal/modules/cjs/loader.js:538:12)
+    at Function.Module._load (internal/modules/cjs/loader.js:530:3)
+    at Function.Module.runMain (internal/modules/cjs/loader.js:742:12)
+    at startup (internal/bootstrap/node.js:279:19)
+    at bootstrapNodeJSCore (internal/bootstrap/node.js:752:3)
+```
+
+可以发现
