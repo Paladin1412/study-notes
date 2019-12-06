@@ -36,3 +36,6 @@ let a = (function() {
 ```
 文件就是模块，每个模块外面会自动套一个函数，并且定义了导出方式 module.exports, exports;
 定义了导入方式， require
+
+
+代码
