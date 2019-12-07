@@ -37,5 +37,134 @@ let a = (function() {
 文件就是模块，每个模块外面会自动套一个函数，并且定义了导出方式 module.exports, exports;
 定义了导入方式， require
 
+node读取到的文件是一个字符串，如何让一个字符串运行，node提供三种运行方式
+1. eval
+2. new Function
+3. vm虚拟环境
 
-代码
+- eval
+```
+var name = 'yd';
+var str = 'var a = 123; console.log(name)';
+eval(str); // yd;
+```
+eval 执行对外部变量有依赖关系，外部变量会对eval中的代码产生影响
+
+- new Function
+```
+const b = 3;
+const str = 'let a = 1; return a + b';
+const fun = new Function('b', str);
+console.log(fun(b, str)); // 4
+```
+new Function 前面传入形式参数列表，多个逗号分开，最后传入要执行的字符串
+同样 外部变量会对eval中的代码产生影响
+
+- vm 内置模块
+```
+// 引入vm模块， 不需要安装，node 自建模块
+const vm = require('vm');
+const hello = 'yd';
+wm.runInThisContext('console.log(hello)'); // 报错
+```
+// node中执行字符串，可以采用vm模块，不会被外部变量影响
+
+### path处理文件路径
+basename: 基础路径, 有文件路径就不是基础路径，基础路劲是1.js
+extname: 获取扩展名
+dirname: 父级路劲
+join: 拼接路径
+resolve: 当前文件夹的绝对路径，注意使用的时候不要在结尾添加/
+__dirname: 当前文件所在文件夹的路径
+__filename: 当前文件的绝对路径
+
+```
+const path = require('path', 's');
+console.log(path.basename('1.js'));
+console.log(path.extname('2.txt'));
+console.log(path.dirname('2.txt'));
+console.log(path.join('a/b/c', 'd/e/f')); // a/b/c/d/e/
+console.log(path.resolve('2.txt'));
+```
+
+
+## fs文件操作
+操作文件，文件夹，权限
+readFile, readFileSync: 读取文件
+```
+const fs = require('fs');
+const buffer = fs.readFileSync('./name.txt', 'utf8'); // 如果不传入编码，出来的是二进制
+console.log(buffer);
+```
+fs.access: 判断是否存在，node10提供的，exists已经废弃, 废弃原因是不符合node规范
+```
+try {
+    fs.accessSync('./name.txt');
+} catch(e) {
+    // 文件不存在
+}
+
+```
+
+## commonjs require方法的实现
+- 内置实现了一个require方法
+- 通过大写的Module._load方法，加载模块
+- Module.resolveFilename 根据相对路径，转换成绝对路径，并且增加后缀
+- 模块的缓存问题 Module._cache
+- new Module 创建模块 id: 存的是名字 exports = {}相当于this
+- tryModuleLoad(module, filename) 尝试加载模块
+- 取出文件的后缀，加载模块(读取文件)，Module._extensions
+- Module.wrap: 把读取到的js包裹一个函数
+- 将拿到的字符串使用runInThisContext运行字符串
+- 让字符串执行并this改编成exports
+
+## 手动实现一个require模块加载器
+```
+// 导入依赖
+const path = require('path'); // 路径操作
+const fs = require('fs'); // 文件读取
+const vm = require('vm'); // 文件执行
+
+// 定义导入类，参数为模块路径
+function Require(modulePath) {
+    // 获取当前要加载的绝对路径
+    let absPathname = path.resolve(__dirname, modulePath);
+    // 创建模块，新建Module实例
+    const module = new Module(absPathname);
+    // 加载当前模块
+    tryModuleLoad(module);
+    // 返回exports对象
+    return module.exports;
+}
+// 定义模块, 添加文件id标识和exports属性
+function Module(id) {
+    this.id = id;
+    // 读取到的文件内容会放在exports中
+    this.exports = {};
+}
+// 定义包裹模块内容的函数
+Module.wrapper = [
+    "(function(export, module, require, __dirname, __filename) {",
+    "})"
+]
+// 定义扩展名，不同的扩展名，加载方式不同，实现js和json
+Module._extensions = {
+    '.js'() {
+        const content = fs.readFileSync(module.id, 'utf8');
+        const fnStr = Module.wrapper[0] + content + Module.wrapper[1];
+        const fn = vm.runInThisContext(fnStr);
+        fn.call(module.exports, module.exports, module, req);
+    },
+    '.json'(module) {
+        const json = fs.readFileSync(module.id, 'utf8');
+        module.exports = JSON.parse(json); // 把文件的结果放在exports属性上
+    }
+}
+// 定义模块加载方法
+function tryModuleLoad(module) {
+    // 获取扩展名
+    const extension = path.extname(module.id);
+    // 通过后缀加载当前模块
+    module._extensions[extension](module);
+}
+```

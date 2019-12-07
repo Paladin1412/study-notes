@@ -208,7 +208,7 @@ console.log(path.resolve('2.txt'));
 readFile, readFileSync: 读取文件
 ```
 const fs = require('fs');
-const buffer = fs.readFileSync('./name.txt', 'uft8'); // 如果不传入编码，出来的是二进制
+const buffer = fs.readFileSync('./name.txt', 'utf8'); // 如果不传入编码，出来的是二进制
 console.log(buffer);
 ```
 fs.access: 判断是否存在，node10提供的，exists已经废弃, 废弃原因是不符合node规范
