@@ -149,11 +149,11 @@ Module.wrapper = [
 ]
 // 定义扩展名，不同的扩展名，加载方式不同，实现js和json
 Module._extensions = {
-    '.js'() {
+    '.js'(module) {
         const content = fs.readFileSync(module.id, 'utf8');
         const fnStr = Module.wrapper[0] + content + Module.wrapper[1];
         const fn = vm.runInThisContext(fnStr);
-        fn.call(module.exports, module.exports, module, req);
+        fn.call(module.exports, module.exports, module, Require);
     },
     '.json'(module) {
         const json = fs.readFileSync(module.id, 'utf8');
@@ -165,6 +165,6 @@ function tryModuleLoad(module) {
     // 获取扩展名
     const extension = path.extname(module.id);
     // 通过后缀加载当前模块
-    module._extensions[extension](module);
+    Module._extensions[extension](module);
 }
 ```
