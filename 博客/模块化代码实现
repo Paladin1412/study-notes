@@ -144,7 +144,7 @@ function Module(id) {
 }
 // 定义包裹模块内容的函数
 Module.wrapper = [
-    "(function(export, module, require, __dirname, __filename) {",
+    "(function(exports, module, Require, __dirname, __filename) {",
     "})"
 ]
 // 定义扩展名，不同的扩展名，加载方式不同，实现js和json
@@ -168,3 +168,109 @@ function tryModuleLoad(module) {
     Module._extensions[extension](module);
 }
 ```
+
+设置文件缓存，如果文件被读取过，则加入缓存中
+node引入文件时，默认添加后缀，顺序为， .js .json等等
+```
+// 定义导入类，参数为模块路径
+function Require(modulePath) {
+    // 获取当前要加载的绝对路径
+    let absPathname = path.resolve(__dirname, modulePath);
+    // 获取所有后缀名
+    const extNames = Object.keys(Module._extensions);
+    let index = 0;
+    // 存储原始文件路径
+    const oldPath = absPathname;
+    function findExt(absPathname) {
+        if (index === extNames.length) {
+           return throw new Error('文件不存在');
+        }
+        try {
+            fs.accessSync(absPathname);
+            return absPathname;
+        } catch(e) {
+            const ext = extNames[index++];
+            findExt(oldPath + ext);
+        }
+    }
+    // 递归追加后缀名，判断文件是否存在
+    absPathname = findExt(absPathname);
+    // 从缓存中读取，如果存在，直接返回结果
+    if (Module._cache[absPathname]) {
+        return Module._cache[absPathname].exports;
+    }
+    // 尝试加载当前模块
+    tryModuleLoad(module);
+    // 创建模块，新建Module实例
+    const module = new Module(absPathname);
+    // 添加缓存
+    Module._cache[absPathname] = module;
+    // 加载当前模块
+    tryModuleLoad(module);
+    // 返回exports对象
+    return module.exports;
+}
+```
+
+## npm 的使用
+- 安装 npm install -g // usr/local/lib/node_modules;
+- 全局 在命令行中使用
+- 局部 可以在代码中使用
+```
+npm init -y; // 初始化项目
+```
+name: 包名
+version: 版本
+description: 描述
+main: 入口文件
+scripts: 脚本，命令的指令，如果运行的命令为start或test，可以省略run
+keywords:
+author:
+license:
+bin: 
+
+```
+module.paths; // []; 先在当前文件夹中查找，如果不存在就去父文件夹查找，一直查找到全局文件夹
+```
+
+## 实现全局命令
+"bin": {
+    "yindong": "./a.js",
+};
+
+npm link: 将本地的文件链接到全局，可以使用全局命令
+
+#! /usr/bin/env node: 在文件顶部添加该语句，确认代码运行的环境
+1. 在package中添加bin命令，前面是命令，后面是执行的文件
+2. #! /usr/bin/env node 使用node来运行文件
+
+## npm包的发布
+- 切换到官方源，使用nrm，发布npm包需要使用npm源
+```
+sudo npm install nrm -g;
+// nrm ls 列出所有可用源
+// nrm current  查看当前的源
+// nrm npm 切换到npm源
+```
+- 登录账号，在npm网站注册，和登录
+或者命令行登录
+```
+npm addUser
+输入用户名，密码和邮箱
+```
+- 发布
+```
+npm publish
+```
+- 取消发布
+```
+npm unpublish --force
+```
+将发布的包拉下来
+
+## yarn
+facebook推出的包管理工具
+- npm install yarn -g
+- yarn add 包名
+- yarn remove 包名
+- yarn global add 包名

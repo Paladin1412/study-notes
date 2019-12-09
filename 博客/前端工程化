@@ -1,5 +1,7 @@
-### webpack
-webpack-cli 工具
+1. webpack 基本使用
+2. loader 插件编写
+3. pulgin 插件编写
+## webpack
 npx 是webpack带的命令工具，使用npx运行webpack会使用项目node_module中的webpack
 ```
 npx webpack -v
@@ -17,9 +19,7 @@ postcss-loader: 添加兼容版本
 css-loader: 把多个css整合
 style-loader: 把css挂在html上
 
-sourceMap：源代码与打包后代码的映射关系，不同的设置值会影响配置
-
-devServer：服务器
+- devServer：服务器
 devServer: {
     contentBase: "./dist",
     open: true, // 自动打开浏览器
@@ -31,7 +31,8 @@ devServer: {
     hot: true, // 开启html热替换 hmr
     hotOnly: true // 不刷新浏览器
 }
-hmr 热替换，需要在plugins中引入
+
+- hmr 热替换，需要在plugins中引入
 plugins: [
     new webpack.HotModuleReplacementPlugin()
 ]
@@ -45,8 +46,7 @@ if (module.hot) {
     })
 }
 ```
-
-babel：
+- babel：
 ```
 loader: "babel-loader",
 options: {
@@ -65,8 +65,8 @@ options: {
 }
 ```
 
-polyfill, 会把js注入到全局变量中，污染全局，适合在项目中，不适合在插件和工具库中使用
-plugin-transform-runtime: 闭包的注入方式，不会影响全局，适合工具库
+- polyfill, 会把js注入到全局变量中，污染全局，适合在项目中，不适合在插件和工具库中使用
+- plugin-transform-runtime: 闭包的注入方式，不会影响全局，适合工具库
 ```
 npm i @babel/plugin-transform-runtime --save;
 npm i @babel/runtime --save;
@@ -80,47 +80,38 @@ options: {
 
 ```
 
-### Loader编写
+## Loader编写
 官网loaders中存放loader的api
-```
-npm init -y;
-npm install webpack webpack-cli -D;
-```
+
 webpack 配置
 ```
 const path = require('path');
 module.exports = {
     mode: "development",
     entry: "./index.js",
-    module: {
-        rules: {
-            test: /\.js$/,
-            use: path.resolve(__dirname, "./loaders/replaceLoader.js")
-        }
-    },
     output: {
         path: path.resolve(__dirname, "dist")
+    },
+    module: {
+        rules: [
+            {
+                test: /.js$/, use: ['./loader.js'] // 引入自定义的loader
+            }
+        ]
     }
 }
-```
-
-replaceLoader.js
-```
-module.exports = function(source) { // 不能用剪头函数，否则拿不到上下文的this
-    console.log(this, source); // 输出的就是entry中的js的源码
-    return source.replace(/aaa/, 'bbb');
-}
-```
-插件接收的参数:
 
 ```
+
+loader.js
+```
+// 函数接收source为参数，值为entry的内容，返回值为向下传递的内容
 module.exports = function(source) {
     console.log(this.query); // 为传入的参数
     return source;
 }
 ```
-
-loader-utils; 官方推荐处理loader.query的工具
+- loader-utils; 官方推荐处理loader.query的工具
 ```
 const loaderUtils = require('loader-utils');
 module.exports = function(source) {
@@ -130,7 +121,7 @@ module.exports = function(source) {
 }
 ```
 
-this.callback：返回更多内容, 替代return
+- this.callback：返回更多内容, 替代return
 
 ```
 module.exports = function(source) {
@@ -153,22 +144,14 @@ module.exports = function(source) {
 }
 ```
 
-resolveLoader: webpack配置loader简写
-
-```
-resolveLoader: {
-    modules: ["node_modules", "./loaders"], // 当配置文件里面使用模块，先去node_modules里面找，如果找不到就去后面路径上面找
-}
-```
-
-### Plugins编写
-plugin开始打包，在某个时候，帮助我们吃力一些什么事情的机制
+## Plugins编写
+plugin开始打包，在某个时候，帮助我们处理一些什么事情的机制
 pubgin要比loader稍微复杂一些，在webpack的源码中，用plugin的机制还是占有非常大的场景，可以说plugin是webpack的灵魂
 设计模式:
 - 事件驱动
 - 发布订阅
-plugin是一个类，里面包含一个apply函数，接受一个参数，compiler
 
+plugin是一个类，里面包含一个apply函数，接受一个参数，compiler
 代码如下
 ```
 class CopyRightWebpackPlugin {
@@ -196,6 +179,7 @@ class CopyRightWebpackPlugin {
 }
 module.exports = CopyRightWebpackPlugin;
 ```
+
 hooks
 生命周期
 - emit
@@ -208,23 +192,21 @@ hooks
 }
 ```
 
-### webpack 打包原理分析
-
-```bundile.js
-
+## webpack 打包原理分析
+新建bundle.js文件
+```
 const fs = require('fs');
 const fenximokuai = function(entry) { // 接收一个入口文件
     const content = fs.readFileSync(entry, 'utf-8');
     console.log(content);
 }
 
-fenximokuai("./src/index.js");
-
+fenximokuai("./index.js");
 ```
+
 需要拿到文件中的依赖模块，这里我们不推荐使用字符串截取，引入的模块名越多，就越麻烦，不灵活，这里我们推荐使用@babel/parser, 这是babel7的工具，来帮助我们分析内部的语法，包括es6，返回一个ast抽象语法树
-
 ```
-npm install @bable/parser  --save
+// npm install @babel/parser --save-dev
 
 const fs = require('fs');
 const parser = require('@babel/parser');
@@ -234,135 +216,8 @@ const fenximokuai = filename => {
     const Ast = parser.parse(content, {
         sourceType: "module"
     });
-    console.log(Ast.pargram.body);
+    console.log(Ast.program.body);
 }
 
 fenximokuai('./index.js');
 ```
-
-接下来我们可以根据body里面的分析结果，遍历出所有的引入模块，但是比较麻烦，这里还是推荐babel推荐的一个模块@babel/traverse，来帮我们处理
-```
-const fs = require('fs');
-const path = require('path');
-const traverse = require("@babel/traverse").default;
-const parser = require('@babel/parser');
-
-const fenximokuai = filename => {
-    const content = fs.readFileSync(filename, 'utf-8');
-    const Ast = parser.parse(content, {
-        sourceType: "module"
-    });
-    const dependencies = {};
-    traverse(Ast, {
-        ImportDeclaration({node}) {
-            const newfile = './' + path.join(path.dirname(filename), node.source.value);
-            // dependencies.push(node.source.value);
-            dependencies[node.source.value] = newfile;
-        }
-    });
-    console.log(dependencies);
-}
-
-fenximokuai('./index.js');
-```
-把代码处理成浏览器可运行的代码，需要借助@babel/core, 和@babel/preset-env, 把ast语法树转换成合适的代码
-
-```
-const babel = rquire('@babel/core');
-const { code } = babel.transformFromAst(Ast, null, {
-    presets: ['@babel/preset-env']
-});
-return {
-    entry,
-    dependencies,
-    code
-}
-
-```
-
-分析模块
-```
-const fs = require('fs');
-const path = require('path');
-const traverse = require("@babel/traverse").default;
-const parser = require('@babel/parser');
-const babel = rquire('@babel/core');
-
-const fenximokuai = filename => {
-    const content = fs.readFileSync(filename, 'utf-8');
-    const Ast = parser.parse(content, {
-        sourceType: "module"
-    });
-    const dependencies = {};
-    traverse(Ast, {
-        ImportDeclaration({node}) {
-            const newfile = './' + path.join(path.dirname(filename), node.source.value);
-            // dependencies.push(node.source.value);
-            dependencies[node.source.value] = newfile;
-        }
-    });
-    
-    const { code } = babel.transformFromAst(Ast, null, {
-        presets: ['@babel/preset-env']
-    });
-    return {
-        filename,
-        dependencies,
-        code
-    }
-}
-
-const info = fenximokuai('./index.js');
-
-```
-
-把项目中的所有依赖都分析出来
-```
-const fenxisuoyoumokuai(filename) {
-    const entryModule = fenximokuai(filename);
-    // 使用队列存储所有
-    const yilaiArr = [entryModule];
-    for (let i = 0; i < yilaiArr.length; i++) {
-        const item = yilaiArr[i];
-        const { dependencies } = item;
-        if (dependencies) {
-            for (ket k in dependencies) {
-                yilaiArr.push(fenximokuai(dependencies[j]));
-            }
-        }
-    }
-    const obj = {};
-    yilaiArr.forEach(item => {
-        obj[item.filename] = {
-            dependencies: item.dependencies,
-            code: item.code
-        }
-    })
-    return obj;
-}
-```
-
-// 定义一个闭包
-```
-const genCode = function(filename) {
-    consyt bundleInfo = JSON.stringfiy(fenxisuoyoumokuai(filename));
-    return `
-        (function(all)) {
-            function require(module) {
-                function localPath(path) {
-                    return require(all[module].dependencies[path]);
-                }
-                const exports = {};
-                (function(require, code){
-                    eval(code);
-                })(localPath, exports, all[module].code);
-                return exports;
-            }
-            // 需要用字符串包裹一下参数
-            require('${filename}');
-        })(${bundleInfo})
-    `;
-}
-const info = getCode('./src/index.js');
-```
-
