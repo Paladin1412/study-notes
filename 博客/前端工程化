@@ -82,6 +82,9 @@ options: {
 
 ## Loader编写
 官网loaders中存放loader的api
+自己编写一个Loader的过程是比较简单的。
+Loader就是一个函数，生命式函数，不能用剪头函数
+拿到源代码，做进一步的修饰处理。再返回处理后的源码就可以了。
 
 webpack 配置
 ```
@@ -153,6 +156,12 @@ pubgin要比loader稍微复杂一些，在webpack的源码中，用plugin的机�
 
 plugin是一个类，里面包含一个apply函数，接受一个参数，compiler
 代码如下
+webpack配置如下
+```
+const CopyRightWebpackPlugin = require('./CopyRightWebpackPlugin.js');
+plugins: [ new CopyRightWebpackPlugin()]
+```
+CopyRightWebpackPlugin.js代码如下
 ```
 class CopyRightWebpackPlugin {
     constructor(options) {
@@ -178,6 +187,7 @@ class CopyRightWebpackPlugin {
     }
 }
 module.exports = CopyRightWebpackPlugin;
+
 ```
 
 hooks
@@ -193,18 +203,52 @@ hooks
 ```
 
 ## webpack 打包原理分析
-新建bundle.js文件
+webpack 在执行webpack命令进行打包后，都干了什么事情?
+```
+(function(modules) {
+    var installedModules = {};
+    function _webpack_require_(moduleId) {
+        if (installedModules[moduleId]) {
+            return installedModules[moduleId].exports;
+        }
+        var module = (installedModules[moduleId] = {
+            i: moduleId,
+            l: false,
+            exports: {}
+        });
+        modules[moduleId].call(
+            module.exports,
+            module,
+            module.exports,
+            _webpack_require_
+        );
+        return module.exports;
+    }
+    return _webpack_require_((_webpack_require_.s = "./index.js"));
+})({
+    "./index.js": function(module, exports) {
+        eval(
+            '// import a from "./a";\n\nconsole.log("hello word");\n\n\n//#sourceURL=webpack:///./index.js?'
+        )
+    }
+})
+```
+大概的意思就是，我们实现了一个webpack_require来实现自己的模块化，把代码都缓存在installedModules里，代码文件以对象传递进来，key是路径，value是包裹的代码字符串，并且代码内部的require，都被替换成了webpack_require
+
+自己实现一个打包js
+- 新建bundle.js文件
+模块分析: 读取入口文件，分析代码
 ```
 const fs = require('fs');
-const fenximokuai = function(entry) { // 接收一个入口文件
-    const content = fs.readFileSync(entry, 'utf-8');
+const fenximokuai = filename => {
+    const content = fs.readFileSync(filename, 'utf-8');
     console.log(content);
 }
 
 fenximokuai("./index.js");
 ```
 
-需要拿到文件中的依赖模块，这里我们不推荐使用字符串截取，引入的模块名越多，就越麻烦，不灵活，这里我们推荐使用@babel/parser, 这是babel7的工具，来帮助我们分析内部的语法，包括es6，返回一个ast抽象语法树
+- 拿到文件中的依赖模块，这里我们不推荐使用字符串截取，引入的模块名越多，就越麻烦，不灵活，这里我们推荐使用@babel/parser, 这是babel7的工具，来帮助我们分析内部的语法，包括es6，返回一个ast抽象语法树
 ```
 // npm install @babel/parser --save-dev
 
@@ -220,4 +264,325 @@ const fenximokuai = filename => {
 }
 
 fenximokuai('./index.js');
+```
+
+- 接下来我们可以根据body里面的分析结果，遍历出所有的引入模块，但是比较麻烦，这里还是推荐babel推荐的一个模块@babel/traverse，来帮我们处理
+```
+// npm install @babel/traverse --save;
+
+const fs = require('fs');
+const path = require('path');
+const traverse = require("@babel/traverse").default;
+const parser = require('@babel/parser');
+
+const fenximokuai = filename => {
+    const content = fs.readFileSync(filename, 'utf-8');
+    const Ast = parser.parse(content, {
+        sourceType: 'module'
+    });
+    const dependencies = [];
+    // 分析ast抽象语法树，根据需要，返回对应数据
+    // 根据结果返回对应的模块，定义一个数组，接受一下node.source.value的值
+    traverse(Ast, {
+        ImportDeclaration({ node }) {
+            console.log(node);
+            dependencies.push(node.source.value的值)
+        }
+    })
+    console.log(dependencies)
+}
+
+fenximokuai('./index.js');
+```
+
+- 处理 入口文件，入口文件引入的模块 路径问题
+```
+// 需要用到path模块
+const parser = require('@babel/parser');
+// 修改dependencies为对象，保存更多的信息
+const dependencies = {};
+// 分析出引入模块，在项目中的路径
+const newfilename = './' + path.join(path.dirname(filename), node.sourceType.value);
+// 保存在dependencies里
+dependencies[node.source.value] = newfilename;
+```
+
+- 把代码处理成浏览器可运行的代码，需要借助@babel/core, 和@babel/preset-env, 把ast语法树转换成合适的代码
+
+```
+// npm install @babel/core @babel/preset-env --save
+
+const babel = rquire('@babel/core');
+const { code } = babel.transformFromAst(Ast, null, {
+    presets: ['@babel/preset-env']
+});
+// 导出所有分析出的信息；
+return {
+    filename,
+    dependencies,
+    code
+}
+
+```
+
+- 完成代码参考
+```
+const fs = require('fs');
+const path = require('path');
+const parser = require('@babel/parser');
+const traverse = require('@babel/traverse').default;
+const babel = require('@babel/core');
+
+const moduleAnalyser = (filename) => {
+    const content = fs.readFileSync(filename, 'utf-8');
+    const ast = parser.parse(content, {
+        sourceType: 'module'
+    });
+    const dependencies = {};
+    traverse(ast, {
+        ImportDeclaration({ node }) {
+            const dirname = path.dirname(filename);
+            const newFile = './' + path.join(dirname, node.source.value);
+            dependencies[node.source.value] = newFile;
+        }
+    });
+    const { code } = babel.transformFromAst(ast, null, {
+        presets: ['@babel/preset-env']
+    });
+    return {
+        filename,
+        dependencies,
+        code
+    }
+}
+
+const moduleInfo = moduleAnalyser('./index.js');
+
+console.log(moduleInfo);
+```
+
+- 分析依赖
+上一步我们已经完成了一个模块的分析，接下来我们要完成项目里所有模块的分析：
+
+```
+const fs = require('fs');
+const path = require('path');
+const parser = require('@babel/parser');
+const traverse = require('@babel/traverse').default;
+const babel = require('@babel/core');
+
+const moduleAnalyser = (filename) => {
+    const content = fs.readFileSync(filename, 'utf-8');
+    const ast = parser.parse(content, {
+        sourceType: 'module'
+    });
+    const dependencies = {};
+    traverse(ast, {
+        ImportDeclaration({ node }) {
+            const dirname = path.dirname(filename);
+            const newFile = './' + path.join(dirname, node.source.value);
+            dependencies[node.source.value] = newFile;
+        }
+    });
+    const { code } = babel.transformFromAst(ast, null, {
+        presets: ['@babel/preset-env']
+    });
+    return {
+        filename,
+        dependencies,
+        code
+    }
+}
+
+const makeDependenciesGraph = (entry) => {
+    const entryModule = moduleAnalyser(entry);
+    const graphArray = [ entryModule ];
+    for (let i = 0; i < graphArray.length; i++) {
+        const item = graphArray[i];
+        const { dependencies } = item;
+        if (dependencies) {
+            for (let j in dependencies) {
+                graphArray.push(
+                    moduleAnalyser(dependencies[j])
+                )
+            }
+        }
+    }
+    const graph = {};
+    graphArray.forEach(item => {
+        graph[item.filename] = {
+            dependencies: item.dependencies,
+            code: item.code
+        }
+    }})
+    return graph;
+}
+const graghInfo = makeDependenciesGraph('./index.js');
+console.log(graghInfo);
+```
+
+- 生成代码
+```
+const fs = require('fs');
+const path = require('path');
+const parser = require('@babel/parser');
+const traverse = require('@babel/traverse').default;
+const babel = require('@babel/core');
+
+const moduleAnalyser = (filename) => {
+    const content = fs.readFileSync(filename, 'utf-8');
+    const ast = parser.parse(content, {
+        sourceType: 'module'
+    });
+    const dependencies = {};
+    traverse(ast, {
+        ImportDeclaration({ node }) {
+            const dirname = path.dirname(filename);
+            const newFile = './' + path.join(dirname, node.source.value);
+            dependencies[node.source.value] = newFile;
+        }
+    });
+    const { code } = babel.transformFromAst(ast, null, {
+        presets: ['@babel/preset-env']
+    });
+    return {
+        filename,
+        dependencies,
+        code
+    }
+}
+
+const makeDependenciesGraph = (entry) => {
+    const entryModule = moduleAnalyser(entry);
+    const graphArray = [ entryModule ];
+    for (let i = 0; i < graphArray.length; i++) {
+        const item = graphArray[i];
+        const { dependencies } = item;
+        if (dependencies) {
+            for(let j in dependencies) {
+                graphArray.push(
+                    moduleAnalyser(dependencies[j])
+                )
+            }
+        }
+    }
+    const graph = {};
+    graphArray.forEach(item => {
+        graph[item.filename] = {
+            dependencies: item.dependencies,
+            code: item.code
+        }
+    });
+    return graph;
+}
+
+const generateCode = (entry) => {
+    const graph = JSON.stringify(makeDependenciesGraph(entry));
+    return `
+        (function(graph) {
+            function require(module) {
+                function localRequire(relativePath) {
+                    return require(graph[module].dependencies[relativePath]);
+                }
+                var exports = {};
+                (function(require, exports, code) {
+                    eval(code);
+                })(localRequire, exports, graph[module].code)
+                return exports;
+            }
+            require('${entry}')
+        })(${graph})
+    `
+}
+
+const code = generateCode('./index.js');
+console.log(code);
+
+```
+将输出的code粘贴到浏览器控制台，发现可以执行
+至此我们就实现了一个简版的webpack打包机制
+
+## 手写版预览
+```
+#! /usr/bin/env node
+
+const path = require('path');
+const fs = require('fs');
+const defaultConfig = {
+    entry: './src/index.js',
+    output: {
+        filename: 'bundle.js'
+    }
+}
+const config = {...defaultConfig, ...require(path.resolve('./mypack.confing.js'))}
+// console.log(config);
+
+class MyPack {
+    constructor(config) {
+        this.config = config;
+        // 入口
+        this.entry = config.entry;
+        // 工作路径
+        this.root = process.cwd();
+        // 依赖关系
+        this.modules = {};
+    }
+    // 创建模块
+    createModule(modulePath, name) {
+        // modulePath是绝对路径，获取文件
+        // name是相对路径，作为key
+        let fileContent = fs.readFileSync(modulePath, 'utf-8');
+        // ./src/index.js 文件的父目录，其实就是src
+        // 解析soruce源码
+        const { code, deps } = this.parse(fileContent, path.dirname(name));
+        // this.modules[name] = code
+        this.modules[name] = `function(module.exports, __mypack_require__) {
+            eval(\`${code}\`)
+        }`
+        // 递归获取依赖
+        deps.forEach(dep => {
+            this.createModule(path.join(this.root, dep), './' + dep)
+        })
+    }
+    parse(code, parent) {
+        let deps = [];
+        // 识别 require('xx')
+        var r = /require\((.*)\)/g
+        code = code.replace(r, function(match, arg) {
+            // console.log(1, match, arg.replace(/'|"/g, ''))
+            const retPath = path.join(parent, arg.replace(/'|"/g, ''))
+            deps.push(retPath)
+            return `__mypack_require__("./${retPath}")`
+        })
+        return { code, deps }
+    }
+    generateModuleStr() {
+        // 生成model字符串
+        let fnTemp = "";
+        object.keys(this.modules).forEach(name => {
+            fnTemp += `"${name}": ${this.modules[name]},`
+        })
+        return fnTemp;
+    }
+    generateFile() {
+        // console.log(this.modules, this.entry)
+        // console.log(123, this.root)
+        let template = fs.readFileSync(path.resolve(__dirname, './template.js'), 'utf-8')
+        template = template.replace('__entry__', this.entry).replace('__content__', this.generateModuleStr())
+        fs.writeFileSync('./dist/'+this.config.output.filename, template)
+    }
+    start() {
+        // 创建依赖关系
+        console.log('开始啦')
+        const entryPath = path.resolve(this.root, this.entry);
+        this.createModule(entryPath, this.entry);
+        this.generateFile();
+    }
+}
+
+const my = new MyPack(config)
+my.start();
+
+console.log('-------\n');
+
 ```
