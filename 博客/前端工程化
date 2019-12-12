@@ -579,7 +579,7 @@ class MyPack {
         this.generateFile();
     }
 }
-
+// 执行打包
 const my = new MyPack(config)
 my.start();
 
