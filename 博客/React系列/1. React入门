@@ -1,0 +1,277 @@
+1. 学习react基础语法
+2. 熟悉官方create-react-app脚手架
+3. 掌握jsx语法
+4. 掌握setState
+5. 掌握react生命周期
+6. 掌握props传递参数
+7. 掌握React组件通信
+
+### 起步
+1. 安装官网脚手架
+    npm install -g create-react-app
+2. 初始化
+    create-react-app react01
+3. react 的 api 比较少，基本学一次，就再也不用看文档了，核心就是js的功力
+
+### React 和 ReactDom
+```
+import React from 'react';
+import ReactDOM from 'react-dom';
+import App from './App';
+ReactDOM.render(<App />, document.querySelector('#root'));
+```
+
+新建App.js
+```
+import React from 'react';
+class Cart extends React.Component {
+    render() {
+        return <div>
+            <button>hello</button>
+        </div>
+    }
+}
+```
+React 设计之初，就是使用jsx来描述ui，所以解耦和dom操作，react只做逻辑层，reactDom去做渲染实际的dom，如果换到移动端，就用别的渲染库。
+
+### JSX
+上面的代码会有一些困惑的地方，首先就是jsx的语法。
+ReactDOM.render(<App />, document.querySelector('#root'));
+看起来是js和html的混合体，被称之为jsx，实际核心的逻辑完全是js实现的。
+
+### State 和 setState
+在APP代码里，我们可以通过{}在jsx中渲染变量
+```
+import React from 'react';
+
+class Cart extends React.Component {
+    render() {
+        const name = "hello";
+        return <div>
+            <button>{name}</button>
+        </div>
+    }
+}
+export default Cart;
+```
+如果数据需要修改，并且同时页面响应变化，我们需要放在state中，并且使用setState来修改数据
+```
+import React from 'react';
+
+class Cart extends React.Component {
+    constructor(props) {
+        super(props)
+        this.state = {
+            name: "hello"
+        }
+        setTimeout(() => {
+            this.setState({
+                name: "你好"
+            })
+        })
+    }
+    render() {
+        return <div>
+            <button>{this.state.name}</button>
+        </div>
+    }
+}
+```
+我们不能使用this.state.name = 'react' 而是要用this.setState, 设置一个新的state，对数据进行覆盖
+
+### Props属性传递
+```
+ReactDOM.render(<App title="hello">, document.querySelector("#root"))
+...
+<h2>{this.props.title}</h2>
+```
+
+### JSX实质
+jsx实质就是React.createElement的调用
+
+```
+class App extends React.Component {
+    render() {
+        return (<div>
+            {this.props.name}, {2 + 2}
+        </div>)
+    }
+}
+
+ReactDOM.render(<App name="React" />, mountNode);
+
+class App extends React.Component {
+    render() {
+        return React.createElement(
+            'div',
+            null,
+            'Hello',
+            this.props.name,
+            ', ',
+            2 + 2
+        )
+    }
+}
+
+ReactDOM.render(React.createElement(App, {name: 'React' }), mountNode)
+
+```
+
+### 条件渲染和循环
+react的api不多，条件渲染和循环，都是普通的js语法
+```
+import React from 'react';
+
+class Cart extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            goods: [1, 2, 3]
+        }
+    }
+
+    render() {
+        return (
+            <div>
+                {
+                    this.state.goods.map(i => <p key={i}>{i}</p>)
+                }
+            </div>
+        )
+    }
+}
+
+export default Cart;
+```
+
+### class VS 函数组件
+如果一个组件只根据props渲染页面，没有内部的state，我们完全可以用函数组件的形式来实现(hooks的到来会改变这个现状)
+
+```
+function Title({title}) {
+    return <h1>{title}</h1>
+}
+<Title title={this.props.title} />
+```
+
+### 事件监听
+React中使用onClick类似的写法来监听事件，注意this绑定问题，react里严格遵循单项数据流，没有数据双向绑定，所以输入框要设置value和onChange
+
+```
+<input
+    type="text"
+    value={this.state.name}
+    onChange={(e) => { this.setState({ name: e.target.value })}}
+/>
+```
+
+### 虚拟DOM
+dom操作成本实在是太高，所以才有了在js里模拟和对比，jsx里使用react，createElement构建虚拟dom, 每次有修改，先对比js里的虚拟dom树
+
+### 生命周期
+static defaultProps = {};
+static propsTypes = {};
+constructor() {
+    super();
+    this.state = {};
+}
+componentWillMount();
+render();
+componentDidMount();
+componentWillReceiveProps();
+shouldComponentUpdate(); // return false
+componentWillUpdate();
+render();
+componentDidUpdate();
+
+componentWillUnmount();
+结束
+
+## React v16.4 的生命周期
+
+> React v16.4 的生命周期图
+
+
+### Hooks
+![img](https:////upload-images.jianshu.io/upload_images/5287253-82f6af8e0cc9012b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1000/format/webp)
+
+React v16.4 的生命周期
+
+### 变更缘由
+
+原来（React v16.0前）的生命周期在React v16推出的[Fiber](https://zhuanlan.zhihu.com/p/26027085)之后就不合适了，因为如果要开启async rendering，在render函数之前的所有函数，都有可能被执行多次。
+
+原来（React v16.0前）的生命周期有哪些是在render前执行的呢？
+
+- componentWillMount
+- componentWillReceiveProps
+- shouldComponentUpdate
+- componentWillUpdate
+
+如果开发者开了async rendering，而且又在以上这些render前执行的生命周期方法做AJAX请求的话，那AJAX将被无谓地多次调用。。。明显不是我们期望的结果。而且在componentWillMount里发起AJAX，不管多快得到结果也赶不上首次render，而且componentWillMount在服务器端渲染也会被调用到（当然，也许这是预期的结果），这样的IO操作放在componentDidMount里更合适。
+
+禁止不能用比劝导开发者不要这样用的效果更好，所以除了shouldComponentUpdate，其他在render函数之前的所有函数（componentWillMount，componentWillReceiveProps，componentWillUpdate）都被getDerivedStateFromProps替代。
+
+也就是用一个静态函数getDerivedStateFromProps来取代被deprecate的几个生命周期函数，就是强制开发者在render之前只做无副作用的操作，而且能做的操作局限在根据props和state决定新的state
+
+React v16.0刚推出的时候，是增加了一个componentDidCatch生命周期函数，这只是一个增量式修改，完全不影响原有生命周期函数；但是，到了React v16.3，大改动来了，引入了两个新的生命周期函数。
+
+### 新引入了两个新的生命周期函数：`getDerivedStateFromProps`，`getSnapshotBeforeUpdate` 
+
+#### getDerivedStateFromProps
+
+`getDerivedStateFromProps`本来（React v16.3中）是只在创建和更新（由父组件引发部分），如果不是由父组件引发，那么getDerivedStateFromProps也不会被调用，如自身setState引发或者forceUpdate引发。
+
+> React v16.3 的生命周期图
+
+
+
+![img](https:////upload-images.jianshu.io/upload_images/5287253-ccb5d35ca1defefc.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1000/format/webp)
+
+React v16.3
+
+这样的话理解起来有点乱，在React v16.4中改正了这一点，让getDerivedStateFromProps无论是Mounting还是Updating，也无论是因为什么引起的Updating，全部都会被调用，具体可看React v16.4 的生命周期图。
+
+> React v16.4后的getDerivedStateFromProps
+
+**static getDerivedStateFromProps(props, state)** 在组件创建时和更新时的render方法之前调用，它应该返回一个对象来更新状态，或者返回null来不更新任何内容。
+
+#### getSnapshotBeforeUpdate
+
+**getSnapshotBeforeUpdate()** 被调用于render之后，可以读取但无法使用DOM。它使您的组件可以在可能更改之前从DOM捕获一些信息（例如滚动位置）。此生命周期返回的任何值都将作为参数传递给componentDidUpdate()。
+
+官网给的例子：
+
+```
+class ScrollingList extends React.Component {
+  constructor(props) {
+    super(props);
+    this.listRef = React.createRef();
+  }
+
+  getSnapshotBeforeUpdate(prevProps, prevState) {
+    //我们是否要添加新的 items 到列表?
+    // 捕捉滚动位置，以便我们可以稍后调整滚动.
+    if (prevProps.list.length < this.props.list.length) {
+      const list = this.listRef.current;
+      return list.scrollHeight - list.scrollTop;
+    }
+    return null;
+  }
+
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    //如果我们有snapshot值, 我们已经添加了 新的items.
+    // 调整滚动以至于这些新的items 不会将旧items推出视图。
+    // (这边的snapshot是 getSnapshotBeforeUpdate方法的返回值)
+    if (snapshot !== null) {
+      const list = this.listRef.current;
+      list.scrollTop = list.scrollHeight - snapshot;
+    }
+  }
+
+  render() {
+    return (
+      <div ref={this.listRef}>{/* ...contents... */}</div>
+    );
+  }
+```
