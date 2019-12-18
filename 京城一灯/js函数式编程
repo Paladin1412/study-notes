@@ -273,8 +273,12 @@ return continue
 - 闭包
 
 - 容器，functor
+
 - 错误处理，Either，AP
+
 - IO
+
 - Monad
+
 ### 三. 当下函数式编程最热的库
 ### 四. 函数式编程的实际应用场景
