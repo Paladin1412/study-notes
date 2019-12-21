@@ -322,6 +322,7 @@ Container.of(3)
 .map(x => x + 1) // 结果Container(4);
 .map(x => "result is " + x); 结果 Container('result is 4')
 ```
+跟数学里面的，一堆数通过映射关系函，变成另外一堆数了。
 - 错误处理，Either，AP
 
 - IO
