@@ -363,7 +363,7 @@ Functor.of(2).map(function(two) {
 // Functor(4);
 ```
 
-Maybe函子
+Maybe函子, 就是if else
 数学里面有三元，但是没有if else
 函子接受各种函数，处理容器内部的值。这里就有一个问题，容器内部的值可能是一个空值(比如 null)，而外部函数未必有处理空值的机制，如果传入空值，很可能就会出错。
 
@@ -381,10 +381,53 @@ Maybe.of(null).map(function(s) {
     return s.toUpperCase();
 })
 // Maybe(null)
+
+var Maybe = function(x) {
+    this._value = x;
+}
+Maybe.of = function(x) {
+    return new Maybe(x);
+}
+Maybe.prototype.map = function(f) {
+    return this.isNothing() ? Maybe.of(null) : Maybe.of(f(this._value));
+}
+Maybe.prototype.isNothing = function() {
+    return (this._value === null || this._value === undefined);
+}
+// 新的容器我们称之为Maybe(原型来自于haskell);
 ```
 
 - 错误处理，Either，AP
+1. 我们的容器能做的事情太少了，try/catch/throw并不是纯的，因为他从外部接管了我们的函数，并且在这个函数出错时抛弃了他的返回值。
+2. Promise是可以调用catch来集中处理错误的。
+3. 事实上 Either并不只是用来做错误处理的，它表示了逻辑或，范畴学里的coproduc。
 
+条件运算if...else 是最常见的运算之一，函数式编程里面，使用Either函子表达。Either函子内部有两个值: 左值和右值。右值是正常情况下使用的值，左值是右值不存在时使用的默认值。
+```
+class Either extends Functor {
+    constructor(left, right) {
+        this.left = left;
+        this.right = right;
+    }
+    map(f) {
+        return this.right ?
+        Either.of(this.left, f(this.right));
+        Either.of(f(this.left), this.right);
+    }
+}
+Either.of = function(left, right) {
+    return new Either(left, right);
+}
+
+var addOne = function(x) {
+    return x + 1;
+}
+Either.of(5, 6).map(addOne);
+// Either(5, 7);
+Either.of(1, null).map(addOne);
+// Either(2, null);
+Either.of({address: 'xxx'}, currentUser.address).map(updateField);
+```
 - IO
 
 - Monad
