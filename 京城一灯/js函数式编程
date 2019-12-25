@@ -427,6 +427,7 @@ Either.of(1, null).map(addOne);
 // Either(2, null);
 Either.of({address: 'xxx'}, currentUser.address).map(updateField);
 ```
+
 - IO
 
 - Monad
