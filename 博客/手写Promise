@@ -793,5 +793,3 @@ console.log(it.next()); // { value: 1, done: false }
 console.log(it.next()); // { value: 2, done: false }
 console.log(it.next()); // { value: 100, done: true }
 ```
-
-
