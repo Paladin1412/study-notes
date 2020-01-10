@@ -183,5 +183,4 @@ console.log('script end2');
 // script start，async1 start，async2， promise1，script end2，promise2， setTimeout
 
 // await xxx(); 会立即执行，相当于promise函数中的内容，await下一行及后面的内容，才相当于在then中
-
 ```
