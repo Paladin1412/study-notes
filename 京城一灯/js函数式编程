@@ -428,8 +428,8 @@ Either.of(1, null).map(addOne);
 Either.of({address: 'xxx'}, currentUser.address).map(updateField);
 ```
 - IO
+
 - Monad
 
 ### 三. 当下函数式编程最热的库
-
 ### 四. 函数式编程的实际应用场景
