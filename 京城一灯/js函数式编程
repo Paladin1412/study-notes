@@ -457,8 +457,50 @@ function readLocalStorage() {
 2. IO跟前面那几个Functor不同的地方在于，它的__value 是一个函数。他把不纯的操作(比如IO, 网络请求，DOM) 包裹到一个函数内，从而延迟这个操作的执行。所以我们认为，IO包含的是被包裹的惭怍的返回值。
 3. IO其实也算是惰性求值。
 4. IO负责了调用链积累了很多很多不纯的操作，带来的复杂性和不可维护性。
+```
+import _ from 'lodash';
+var compose = _.flowRight;
+var IO = function(f) {
+    this.__value = f;
+}
+IO.of = x => new IO(__ => x);
+IO.prototype.map = function(f) {
+    return new IO(compose(f, this.__value));
+}
+```
 
+```
+import _ from 'loadsh';
+var compose = _.flowRight;
+class IO extends Monad {
+    map(f) {
+        return IO.of(compose(f, this.__value));
+    }
+}
+```
+
+IO函子
+```
+var fs = require('fs');
+var readFile = function(filename) {
+    return new IO(function() {
+        return fs.readFileSync(filename, 'utf-8');
+    });
+};
+
+readFile('./user.txt')
+.flatMap(tail)
+.flatMap(print)
+// 等同于
+readFile('./user.txt')
+.chain(tail)
+.chain(print)
+```
 - Monad
+我们先后提到了Maybe，Either，IO这三种强大的Functor，在链式调用，惰性求值，错误捕获，输入输出中都发挥着巨大的作用。事实上Functor远不止这三种。
+但依然有问题困扰着我们:
+1. 如何处理嵌套的Functor呢？(比如Maybe(IO(42)))
+2. 如何处理一个由非纯的或者异步的操作序列呢?
 
 ### 三. 当下函数式编程最热的库
 ### 四. 函数式编程的实际应用场景
