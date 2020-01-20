@@ -502,5 +502,28 @@ readFile('./user.txt')
 1. 如何处理嵌套的Functor呢？(比如Maybe(IO(42)))
 2. 如何处理一个由非纯的或者异步的操作序列呢?
 
+什么是Monad？
+1. Monad就是一种设计模式，表示将一个运算过程，通过函数拆解成互相连接的多个步骤，你只要提供下一步运算所需的函数，整个运算就会自动进行下去。
+2. Promise就是一种Monad
+3. Monad让我们避开了嵌套地狱，可以轻松地进行深度嵌套的函数式编程，比如IO和其他异步任务。
+4. 记得让上面的IO集成Monad
+
+```
+Maybe.of(
+    Maybe.of(
+        Maybe.of({ name: 'Mulburry', number: 8402})
+    )
+)
+class Monad extends Functor {
+    join() {
+        return this.val;
+    }
+    flatMap(f) {
+        return this.map(f).join();
+    }
+}
+```
+Monad函子的作用是，总是返回一个单层的函子，它有一个flatMap方法，与map方法作用相同，唯一的区别是如果生成了一个嵌套函子，他会取出后者内部的值，保证返回额永远是一个单层的容器。
+
 ### 三. 当下函数式编程最热的库
 ### 四. 函数式编程的实际应用场景
