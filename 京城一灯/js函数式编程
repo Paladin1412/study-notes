@@ -427,8 +427,30 @@ Either.of(1, null).map(addOne);
 // Either(2, null);
 Either.of({address: 'xxx'}, currentUser.address).map(updateField);
 ```
+错误处理，Either
+```
+var agetAge = user = user.age ? Right.of(user.age) : Left.of("ERROR!");
+getAge({ name: 'stark', age: '21'}).map(age => age => 'Age is' + age);
+// => Right('Age is 21');
+getAge({ name: 'srark'}).map(age => 'Age is' + age);
+// => Left('ERROR!')
+```
+Left可以让调用链中任意一环的错误立刻返回到调用链的尾部，这给我们错误处理带来了很大的方便，再也不用一层又一层的 try/catch
+
+- AP函子
+1. 函子里面包含的值，完全可能是函数。我们可以想象这样一种情况，一个函子的值是数值，另一个函子的值是函数。
+```
+class Ap extends Functor {
+    ap(F) {
+        return Ap.of(this.val(F.val));
+    }
+}
+Ap.of(addTwo).ap(Functor.of(2));
+```
+
 - IO
 
 - Monad
+
 ### 三. 当下函数式编程最热的库
 ### 四. 函数式编程的实际应用场景
