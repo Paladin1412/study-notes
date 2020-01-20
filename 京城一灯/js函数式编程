@@ -447,8 +447,16 @@ class Ap extends Functor {
 }
 Ap.of(addTwo).ap(Functor.of(2));
 ```
-
 - IO
+1. 真正的程序总要去接出肮脏的世界。
+```
+function readLocalStorage() {
+    return window.localStorage;
+}
+```
+2. IO跟前面那几个Functor不同的地方在于，它的__value 是一个函数。他把不纯的操作(比如IO, 网络请求，DOM) 包裹到一个函数内，从而延迟这个操作的执行。所以我们认为，IO包含的是被包裹的惭怍的返回值。
+3. IO其实也算是惰性求值。
+4. IO负责了调用链积累了很多很多不纯的操作，带来的复杂性和不可维护性。
 
 - Monad
 
