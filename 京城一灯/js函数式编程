@@ -523,7 +523,94 @@ class Monad extends Functor {
     }
 }
 ```
-Monad函子的作用是，总是返回一个单层的函子，它有一个flatMap方法，与map方法作用相同，唯一的区别是如果生成了一个嵌套函子，他会取出后者内部的值，保证返回额永远是一个单层的容器。
+Monad函子的作用是，总是返回一个单层的函子，它有一个flatMap方法，与map方法作用相同，唯一的区别是如果生成了一个嵌套函子，他会取出后者内部的值，保证返回的永远是一个单层的容器，不会出现嵌套的情况。
+如果函数f返回的是一个函子，那么this.map(f)就会生成一个嵌套的函子。所以，join方法保证了flatMap方法总是返回一个单层的函子。这意味着嵌套的函子会被铺平(flatten)。
 
+```
+var fs = require('fs');
+import _ from 'loadsh';
+var compose = _.flowRight;
+class Monad extends Functor {
+    join() {
+        return this.__value;
+    }
+    flatMap(f) {
+        return this.map(f).join();
+    }
+}
+
+class IO extends Monad {
+    constructor(value) {
+        this.__value = value;
+    }
+    map(f) {
+        return IO.of(compose(f, this.__value));
+    }
+}
+
+var readFile = function(filename) {
+    return new IO(function() {
+        return fs.readFileSync(filename, 'utf-8');
+    })
+}
+
+readFile('./user.txt')
+.flatMap(tail)
+.flatMap(print)
+```
 ### 三. 当下函数式编程最热的库
+rxjs 已经过时，因为大部分api浏览器已经实现了。
+Rxjs从诞生以来一直都不温不火，但它函数响应式变成(Functional Reactive Programming, FRP)的理念非常先进，虽然或许对于大部分应用环境来说，外部输入事件并不是太频繁，并不需要引入一个如此庞大的FRP体系，但我们也可以了解一下它有哪些优秀的特性。
+在Rxjs中，所有的外部输入(用户输入，网络请求等等) 都被视作一种 事件流:
+用户点击了按钮 -> 网络请求成功 -> 用户键盘输入 -> 某个定时事件发生 -> 这种事件流特别适合处理游戏， 上上下下上上下下 举个简单的例子，下面这段代码会监听点击事件，每2次点击事件产生一次事件响应:
+```
+var clicks = Rx.Observable
+.fromEvent(document, 'clcik')
+bufferCount(2)
+.subscribe(x => console.log(x)); // 打印出前2次点击事件。
+```
+Rxjs
+响应式编程是继承自函数式编程，声明式的，不可变的，没有副作用的是函数式编程的三大护法。其中不可变武功最高深。一直使用面向对象范式编程的我们，习惯了用变量存储和追踪程序的状态。RxJS从函数式编程范式中借鉴了很多东西，比如链式函数调用，惰性求值等等。
+在函数中与函数作用域之外的一切事物有交互的就产生了副作用。比如读写文件，在控制台打印语句，修改页面元素的css等等。在RxJS中，把副作用问题推给了订阅者来解决。
+Cycle.js
+Cyclejs是一个基于Rxjs的框架，它是一个彻彻底底的FRP理念的框架，和React一样支持VirtalDOM，JSX语法，但现在似乎还没有看到大型的应用经验。
+本质的讲，他就是在Rxjs的基础上加入了对VirytualDOM，容器和组件的支持，比如下面就是一个简单的 开关 按钮。
+```
+function main(sources) {
+    const sinks = {
+        DOM: sources.DOM.select('input').events('click').map(ev => ev.target.checked).startWith(false).map(toggled => <div>
+            <input type="checkbox" />Toogle me
+            <p>{toggled ? 'NO' : 'off'}</p>
+        </div>);
+    }
+    return sinks;
+}
+const drivers = {
+    DOM: makeDOMDriver('#app')
+}
+run(main, dirvers);
+```
+Underscore.js
+Underscore是一个JavaScript工具库，它提供了一整套函数式编程的实用功能，但是没有扩展任何JavaScript内置对象。他解决了这个问题: 如果我面对一个空白的HTML页面，并希望立即开始工作，我需要什么？ 他弥补了JQuery没有实现的功能，同时又是Backbone必不可少的部分。
+Underscore提供了100多个函数，包括常用的 map，filter，invoke，当然还有更多专业的辅助函数，如: 函数绑定，JavaScript模板功能，创建快速索引，强类型相等测试等等。
+
+Lodash.js
+lodash是一个具有一致接口，模块化，高想能等特性的Javascript工具库，是underscose.js的fork，其最初目标也是一致的跨浏览器行为，并改善性能。
+lodash采用延迟计算，意味着我们的链式方法在显示或隐式的value()调用之前是不会执行的。因此lodash可进行shortcut(捷径)，fusion(融合)这样的优化，通过合并链式大大降低迭代的次数，从而大大提升其执行性能。
+就如同jQuery在全部函数前加全局的$一样，lodash使用全局的__来提供对工具的快速访问。
+
+Ramdajs
+ramda是一个非常优秀的js工具库，跟同类比更函数式主要体现在一下几个原则。
+1. ramda里面的提供的函数全部都是curry的，意味着函数没有默认参数可选参数从而减轻认知函数的难度。
+2. ramda推崇pointfree简单的说是使用简单函数组合实现一个复杂功能，而不是单独写一个函数操作临时变量。
+3. ramda有个非常好用的参数占位符R._，大大减轻了函数在pointfree过程中参数位置的问题。
+相比undersorce/lodash感觉要干净很多。
+
 ### 四. 函数式编程的实际应用场景
+易调试，热部署，并发
+单元测试
+
+总结与补充
+我们本节课介绍了纯函数，柯里化，PintFree，声明式代码和命令式代码的区别，只要记住 函数对于外部状态的依赖是造成西永复杂性大大提高的主要原因 以及 让函数尽可能地纯净 就行了。
+然后介绍了容器的概念和Maybe，Either，IO这三个强大的Functor。是的，大多数人或许都没有机会在生产环境中自己取实现这样的玩具级Functor，但通过了解他们的特性会让你产生对于函数式编程的意识。
+软件工程上讲，没有银弹，函数式编程同样也不是万能的。他与烂大街的OOP一样，只是一种编程范式而已，很多实际应用中是很难用函数式去表达的。选择OOP亦或是其他编程范式或许会更简单，但我们要注意到函数式编程的核心理念，如果说OOP降低复杂度是靠良好的封装，继承，多态及接口定义的话，那么函数式编程就是通过纯函数以及他们的组合，柯里化，Functor等技术来降低系统复杂度。而React，Rxjs，Cycle.js正是这种理念的代言。让我们一起拥抱函数式编程，打开你程序的大门！
