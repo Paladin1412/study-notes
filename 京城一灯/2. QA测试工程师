@@ -1,1 +1,51 @@
-121213
+测试核心概念
+- 单元测试
+- 性能测试
+- 安全测试
+- 功能测试
+- UI还原测试
+
+创建项目:
+```
+npm init
+```
+新建tests文件夹
+
+一. 单元测试 unit
+函数，类，组件， 小的测试，
+unit -> 单元测试
+
+``` 被测试代码 index.js
+window.add = function(num) {
+    return num + 1;
+}
+```
+unit -> index.spec
+
+before, beforeEach, it, after, afterEach
+每个测试用例组通过describe进行设置
+1. before: 单个测试用例(it)开始前
+2. beforeEach每一个测试用例开始前。
+3. it定义测试用例，并利用断言库进行，设置chai如：expect(x).to.equal(true);异步mocha
+4. 以上专业术语叫mock
+```
+describe("函数是否可用", function() {
+    it("函数是否可用").
+}).
+```
+karma断言框架
+npm install karma --save-dev
+
+
+TDD: 测试驱动开发
+BDD: 行为驱动开发
+单元测试框架
+better-assert(TDD断言库)
+should.js(BDD断言库)
+expect.js(BDD断言库)
+chai.js(TDD BDD双摸)
+Jasmine.js(BDD)
+Node.js本身集成assert
+Intern更是一个大而全的单元测试框架
+QUnit 一个游离在JQuery左右的测试框架
+Macaca一套完整的自动化测试解决方案，国产神器来自阿里巴巴
