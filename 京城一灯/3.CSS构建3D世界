@@ -67,3 +67,25 @@ function deviceMotionHandler(eventData) {
     }
 }
 ```
+css3d-engine库
+```
+var s = new C3D.Stage();
+s.size(window.innerWidth, window.innerHeight).material({
+    color: '#ccc',
+}).update();
+document.getElementById('main').appendChild(s.el);
+// 创建1个立方体放入场景
+var c = new C3D.Skybox();
+c.size(1024).position(0, 0, 0).material({
+    front: { image: 'images/cube_FR.jpg'},
+    back: { image: 'images/cube_FR.jpg'},
+    left: { image: 'images/cube_FR.jpg'},
+    right: { image: 'images/cube_FR.jpg'},
+    up: { image: 'images/cube_FR.jpg'},
+    down: { image: 'images/cube_FR.jpg'},
+}).update();
+s.addChild(c);
+```
+
+parallax.js 视差，轻量级引擎库。
+
