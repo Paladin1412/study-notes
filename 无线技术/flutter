@@ -1,0 +1,54 @@
+语雀IT百科-前端文档站
+
+Flutter是谷歌在2015年推出的，Dart是谷歌2011年谷歌推出的新的计算机编程语言。Flutter初始名字叫Sky,后改名Flutter，使用Dart语言开发。
+2018年6月21日谷歌推出1.0版本，
+
+Flutter和RN有什么不同
+1. 多平台支持
+RN目前支持IOS和安卓
+flutter早起支持ios和安卓，desktop的支持尚不完善，近期flutter团第发布了HB，想让flutter编写的应用可以运行在浏览器端。长期看flutter支持较好。
+
+2. 工具链
+RN在打包发布，广泛使用webpack支持，官网自己提供了基于浏览器的debug工具，符合前端同学调试习惯。
+flutter基于ios和安卓已有的打包工具添加了flutter产物打包功能，同样debug工具也由官网自己提供，除了发布的基于浏览器的调试工具外，flutter团队提供的调试工具可以直接在Android Studio或vscode这类的ide上直接使用。
+
+3. 热更新
+RN支持且有多套热更新方案
+flutter目前还没有，不过codepush方案正在研发当中，相信不就以后就会出来。
+
+4. 调试便利性
+js的调试比较成熟
+
+5. 生态圈，第三方库
+RN可以使用js的大部分库，平台相关的plugin也相对丰富。
+flutter在这方面稍显欠缺，库的数量上无法与js生态相比较，flutter、plugins项目提供的大量的平台相关插件供开发者使用，倒也满足了日常开发的需求，另外dart pubs上的公开库数量也日趋上升。
+在混合开发和大型app业务框架上，闲鱼技术开源的flutter_boost提供了与native混合开发的可能，而fish_redux 使得大型app中的复杂页面的开发在flutter中变得更加容易。
+
+6. 发展趋势
+RN是个很好的项目，在发布之初给移动开发带来了一阵旋风，但不得不说airbnb宣布放弃使用RN技术。
+flutter发布之后趋于成熟，被钦定为google fuchsia系统的应用层框架。
+
+Dart语言开发框架和widget的语言，底层图形框架和Dart虚拟机在C/C++中实现。
+
+学习Flutter需要哪些必备知识？
+Dart语言基础
+Flutter对熟悉面向对象盖面(类，方法，变量等)和命令式编程概念(循环，条件等)的程序员来说是很容易入门的，学习使用Flutter，无需事先具备移动开发经验
+java和安卓相关开发经验
+
+在哪学习？
+Flutter中文网
+掘金社区
+stackoverflow
+
+Dart语言好学么？
+有java或js基础，十分好学。
+
+学习Dart资源
+Dart官网
+dart.goodev.org
+
+Flutter特点
+- 快速开发
+- 性能优越
+- 富有表现力的精美UI框架
+- Everything is widget
