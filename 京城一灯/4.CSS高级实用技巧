@@ -11,3 +11,57 @@ position float 负边距 等高 盒子模型，
 双飞翼布局: CSS HACK
 早期是给IE用的，兼容性非常好的一种布局。
 html:xt, 过渡版本，不是html5
+
+### 弹性盒模型
+重置css：
+Reset.css 重置
+Normalize.css 修复
+Neat.css 融合了Reset和Normalize
+
+如果开发H5页面，最好全局添加如下样式
+html { box-sizing: border-box;}
+*,*:before, x:after { box-sizing: inherit;}
+
+no-image时代
+http://cssicon.space
+
+css规范
+css hint
+1. 不要使用多个class选择元素，如a.foo.boo, 
+2. 移除空的css
+3. 正确使用属性
+...
+要符合规范，否则不让上线。
+使用，csshint
+npm install csshint;
+在线查看
+csslint.net;
+
+### BFC IFC GFC FFC
+
+## BFC
+Box是css布局的基本单位，直观点来说，就是一个页面是由很多个Box组成的，元素的类型和display属性，决定了这个Box的类型，不同类型的Box，会参与不同的Formatting Context 一个决定如何渲染文档的容器，因此Box内的元素会以不同的方式渲染，让我们看看有哪些盒子
+block-level box：display 属性为block，inline-block,inline-table的元素，会产生乘inline-leve box，并且参与inline formatting content
+inline-level box：display 属性为inline，inline-item，table的元素会生成block-level box 并参与block formatting Context
+
+Fromatting context 是 w3c css2.1规范中的一个概念，他是页面中的一款渲染区域，并且有一套渲染规则，他决定了妻子元素将如何定位，以及和其他元素的关系和相互作用。最常见的 Formatting Context 有 block fomatting context 简称BFC 和 inline formatting context 简称IFC
+
+哪些元素会生成BFC：根元素 float不为none， 绝对定位或fixed定位，overflow补位visiable，块级css属性
+
+FFC是flex布局的渲染。
+GFC是Grid Layout
+
+### CSS分层理论
+SMACSS: 就是分文件 base.css, layout.css,module.css, state.css
+BEM：
+SUIT
+ACSS：原子css，小粒度的css，.fl { float: left}
+ITCSS：混合css，minx
+
+### 数学矩阵技巧
+SVG
+Canvas
+webgl
+css3d
+http://wow.techbrood.com/fiddle/25741
+css-matrix3d
