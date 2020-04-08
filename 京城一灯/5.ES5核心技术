@@ -1,0 +1,29 @@
+function Car() {
+    this.sail = function() { // 每次实例化都会创建
+
+    }
+}
+Car.prototype.sail = function() { // 所有实例化共享
+
+}
+
+如果构造函数中和原型链中拥有相同的方法和属性，构造函数中的优先级高。
+
+
+原型继承
+1. 拿到父类的原型链上的方法
+2. 不能让构造函数执行2次
+3. 引用的原型链不能是按地址引用
+4. 修正子类的构造函数
+
+```
+var __pro = Object.Create(Car.prototype) // 创建一个原型副本
+__pro.constructor = Car2;
+Car2.prototype = __pro;
+```
+
+闭包容易造成内存泄露，手动置为null，避免内存泄漏
+
+构造函数里的属性的优先级比原型链的要高。
+面向对象编程的时候js没有类的概念，可以用函数替代。注意constructor
+函数提升，变量提升，函数提升的级别要比变量高
