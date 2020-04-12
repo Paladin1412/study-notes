@@ -32,3 +32,25 @@ ajax状态为3的时候，就可以拿到服务器返回的内容，状态为4�
 2. webSocket;
 
 3. SSE(Server-Send Event)
+EventSource：浏览器API
+<?php
+header('Content-type: application/json; charset=utf-8');
+header('Access-Control-Allow-Origin: http:127.0.0.1/');
+echo "data: 哈哈哈哈哈date('H:i:s')"
+>
+
+var source;
+function init(argument) {
+    source = new EventSource('api地址');
+    source.onopen = function() {
+        console.log('链接已建立', this.readyState);
+    }
+    source.onmessage = function(event) {
+        console.log('实时获取的数据', event.data);
+    }
+    sourceonerror = function() {
+
+    }
+}
+
+init();

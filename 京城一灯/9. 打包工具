@@ -1,0 +1,30 @@
+HTTP Upstream: 模块
+ip_hash: 指令
+server 指令
+upstream指令及其相关变量
+
+### parcel
+急速打包
+将你所有的资源打包
+自动转换
+零配置代码分拆
+热模块替换
+友好的错误日志
+
+npm install -g parcel-bundler;
+
+需要node8以上的版本。
+```
+impory main from './main.js';
+```
+main.js
+```
+export default ()=> {
+
+}
+```
+
+main.css
+background: red;
+
+parcel index.html;
