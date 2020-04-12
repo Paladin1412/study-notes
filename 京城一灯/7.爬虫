@@ -1,1 +1,29 @@
-爬虫：是一种
+爬虫：是一种自动获取网页内容的程序，是搜索引擎的重要组成部分，因此搜索引擎优化很大程度上是针对爬虫而做出的优化。
+robots.txt 是一个文本文件，robots.txt是一个协议，不是一个命令。robots.txt是爬虫要查看的第一个文件，robots.txt文件告诉爬虫在服务器上什么文件时可以被查看的，搜索机器人就会按照该文件中的内容来确定访问的范围。
+
+https://www.baidu.com/robots.txt
+
+
+User-agent: *
+Disallow: /baidu
+Disallow: /s?
+Disallow: /ulink?
+Disallow: /link?
+Disallow: /home/news/data/
+Disallow: /bh
+
+配置爬虫系统开发环境
+express: 
+request: 
+cheerio: 可以像jq一样操作dom
+
+```
+var express = require('express');
+var app = express();
+var request = require('request');
+var cheerio = require('cheerio');
+app.get('/', function() {
+    $ = cheerio.load('<div>123</div>');
+    $('div').length;
+})
+```
