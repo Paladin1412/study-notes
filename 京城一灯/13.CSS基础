@@ -1,0 +1,44 @@
+注意事项
+1. 不要直接定义子节点，应把共性声明放到父类
+2. 结构和皮肤相分离
+3. 容器和内容相分离
+4. 抽象出可重用的元素，建好组件库，在组件库内寻找可用的元素组装页面
+5. 往你想要扩展的对象本身增加class而不是他的父节点
+6. 对象应保持独立性
+7. 避免使用Id选择器，权重太高，无法重用
+8. 避免位置相关的样式。
+9. 保证选择器相同的权重
+10. 类名 简短 清晰 语义化
+
+## 实战
+http://oocss.org
+下载 Alternate download
+
+## css 后处理器
+autoprefixer
+postcss
+
+## css绘制特殊图形
+- 三角形
+- 圆形
+- 特殊图形
+
+border-top-left-radius: 30px; // 左上角
+
+css绘制QQ
+http://www.alloyteam.com/2012/10/css3-draw-qq-logo/
+
+icon-font
+1. no-image 时代，不超过纯色为2的图像
+2. 宋体非宋体，黑体非黑体，windows下的宋体叫中易宋体simsun，mac是华文宋体STSong，windows下的黑体叫中易黑体SimHei，Mac是华文黑体STHeiti
+3. 不要只写中文字体名，保证西文字体在中文字体前面，mac > linux > windows
+4. 切忌不要直接用设计师PSD的字体，关键时刻再去启动font-face
+5. font-family: sans-serif; 
+
+css hint
+
+after && before 可以使任何一个元素变成三个元素。
+
+Flexbox
+css grid layout
+box alignment

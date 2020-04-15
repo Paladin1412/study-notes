@@ -1,0 +1,18 @@
+### 下载
+jenkins.io/download
+
+yum install -y jenkins;
+
+### 安装
+需要jre环境，因为是java开发的应用。
+
+jenkins支持git和svn
+
+是一个ci工具，开发和发布的流程。开源产品。
+依赖tomcat，因为java开发。
+
+### 启动
+systemctl status jenkins;
+
+### 页面介绍
+
