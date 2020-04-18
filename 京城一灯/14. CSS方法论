@@ -111,10 +111,99 @@ js -> style -> layoout -> paint -> composite
 
 在现今的web开发中，js几乎占据所有版面，除了控制页面逻辑与操作DOM对象外，连css都直接写在js里面了，就算浏览器还没实现的特性，总会有人做出对应的polyfills, 让你快速的将新Feature应用到Production环境中，更别提我们还有Babel等工具帮忙转移。
 
-而css就不同了
+而css就不同了,除了制定了css标准规范所需的时间外，各家浏览器的版本，实战进度差异更是旷日持久，顶多利用postcss，sass等工具来帮我们转译出浏览器能接受的css，开发者们能操作的就是通过js去空值DOM与CSSOM来影响页面的变化，但是对于接下来的layout，paint与composite就几乎没有控制权了。
+
+为了解决上述问题，为了让css的魔力不再浏览器把持，houdini就诞生了。
+css houdini 让开发者能够介入浏览器的css engine
+
+layout 重排
+paint 重绘
+
 
 - Parser, Paint, Layout
+允许开发者自由扩展css此法分析器
+
 - Worklets实战
+
 - Properties/ Values
+
 - Typed OM Object
+
+### 使用
+
+worklets的概念和web worker类似，他们允许你引入脚本文件并执行特定的js代码，这样的js代码要满足两个条件，第一，可以在渲染流程中调用，第二，和主线程独立。
+worklet脚本严格控制了开发者所能执行的操作类型，这就保证了性能worklets的特点就是轻量以及生命周期较短。
+
+CSS.paintWorklet.addModule('xxx.js');
+CSS.layoutWorklet.addModule('xxx.js');
+// xxx.js
+registerPaint('xxx', class {
+    static get inputProperties() {}
+    static get inputArguments() {}
+    paint(ctx, geom, props) {}
+})
+
+
+### 演示
+
+css:
+
+.el {
+    --elUnit: 500px;
+    --arcColor: yellow;
+    height: var(--elUnit);
+    width: var(--elUnit);
+    --background-canvas: (ctx, geom) > { // 变量，可以使用函数
+        // geom 当前类 .el 所有的信息
+        // ctx相当于一个canvas
+        ctx.strokeStyle = `var(--arcColor)`;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(200, 200, 50, 0, 2*Math.PI);
+        ctx.stroke();
+        ctx.closePath();
+    };
+    background: paint(--background-canvas);
+}
+
+需要激活
+<script>
+CSS.paintWorklet.addModule('./arc.js');
+</script>
+
+arc.js:
+if (typeof registerPaint !== 'undefined') {
+    registerPaint('background-canvas', class {
+        static get inputProperties() { // 获取变量
+            return ['--background-canvas'];
+        }
+        paint(ctx, geom,  properties) { // 绘制
+            eval(properties.get('--background-canvas').toString())(
+                ctx, geom, properties
+            );
+        }
+    })
+}
+
+需要放入服务器中, 起个服务进行加载。
+
+js就类似canvas语法，只是不能操作dom;
+
+class Test {
+    static get inputProperties() { // 获取变量
+        // const a = 123;
+        // setTimeout()
+        return ['--background-canvas'];
+    }
+    paint(ctx, geom,  properties) { // 绘制
+        eval(properties.get('--background-canvas').toString())(
+            ctx, geom, properties
+        );
+    }
+}
+
+registerPaint('background-canvas', Test);
+
+
+CSS.px(42);  === 42px;
 
