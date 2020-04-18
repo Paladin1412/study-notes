@@ -5,6 +5,12 @@ css有语义化的命名约定和css层的分离，将有助于它的可扩展�
 有责任感的去命名你的选择器。
 
 - SMACSS
+base 设定标签越苏的预设值
+layout 整个网站的大架构的外观
+module 应用在不同页面的公共模块
+state 定义元素不同的状态
+theme: 画面上所有主视觉的定义，border-color, background
+修饰符用-,子元素用__
 - BEM
 BEM和SMACSS非常类似，主要用来如何给项目命名，一个简单命名更容易让别人一起工作，比如选项卡导航是一个块（Block），这个块里的元素的是其中标签之一，而当前选项卡是一个修饰状态。
 block 代表了更高级别的抽象或组件
@@ -36,3 +42,79 @@ css 压缩， clean-css
 css更加美观排序csscomb
 reword渠道styles后处理器
 前后通吃postcss
+
+### nextcss
+https://cssnext.github.io/playground
+
+:root { // 全局变量
+    --fontSize: 1rem; // 变量
+    --mainColor: #12345678;
+    --highlightColor: hwb(190, 35%, 20%)
+}
+
+body {
+    color: var(--mainColor)
+}
+
+:root {
+    --centered: {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+.centered {
+    @apply --centered;
+}
+
+calc: css表达式
+calc(15px * 2);
+
+image-set (
+    url(img/test.png) 1x,
+    url(img/test-2x.png) 2x
+)
+
+filter 滤镜
+
+css正则
+[frame=hsides i] { // 忽略hsides大小写
+
+}
+
+使用webpack的css-loader即可编译， 添加modules
+
+使用postcss进行编译css
+使用postcss-preset-env 编译cssnext语法
+
+### postcss插件集
+postcss-custom-properties 运行时变量
+postcss-simple-vars 与scss一致的变量实现
+postcss-mixins 实现类似sass的@mixin的功能
+postcss-extend 实现类似sass的继承功能
+postcss-import实现类似sass的import
+cssnext面向未来，cssgrace修复过去，兼容ie6
+
+https://cssdb.org
+
+autoprefixer 已经被继承，不需要用了。
+
+### css-doodle
+是一个webcomonent
+<css-doodle>
+</css-doodle>
+
+### Houdini
+css魔术师  js in css
+
+js -> style -> layoout -> paint -> composite
+
+在现今的web开发中，js几乎占据所有版面，除了控制页面逻辑与操作DOM对象外，连css都直接写在js里面了，就算浏览器还没实现的特性，总会有人做出对应的polyfills, 让你快速的将新Feature应用到Production环境中，更别提我们还有Babel等工具帮忙转移。
+
+而css就不同了
+
+- Parser, Paint, Layout
+- Worklets实战
+- Properties/ Values
+- Typed OM Object
+
