@@ -1,0 +1,67 @@
+1. 居中
+父元素display:flex
+子元素 margin: auto
+.parent {
+    display: flex;
+}
+.children {
+    margin: auto;
+}
+
+2. 居右
+父元素display: flex;
+子元素margin-left: auto;
+.parent {
+    display: flex;
+}
+.children {
+    margin-left: auto;
+}
+
+3. 色相
+filter:hue-rotate(60deg); // 色相旋转60度
+
+4. 蒙版
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+
+5. 设置滚动条
+div::-webkit-scrollbar {
+    width: 200px;
+}
+
+6. 拖动
+resize: horizontal;
+
+7. 修改滚动条
+-webkit-scrollbar: 滚动条
+-webkit-scrollbar-button: 滚动条上下箭头
+-webkit-scrollbar-thumb: 滚动按钮
+-webkit-scrollbar-track: 滚动区域
+-webkit-scrollbar-track-piece: 剩余滚动区域
+-webkit-scrollbar-comer: 横纵滚动交界
+-webkit-scrollbar-resizer: 纵向滚动交界
+
+8. 遮罩
+-webkit-mask-image: url(png文件遮罩)
+
+9. 混合模式
+
+mix-blend-mode: hue; // 屏蔽灰色之后着色。
+background-blend-mode: darken; // 背景混合模式
+
+10. 滤镜
+filter: brightness(80%) grayscale(20%) contrast(1.2); 光线下降80%；灰度20%；对比度
+
+演示 - 白天变黑夜
+background-blend-mode: darken;
+filter: brightness(80%) grayscale(20%) contrast(1.2);
+
+11. 自助滚动
+父元素：
+white-space: nowrap;
+scroll-snap-align: x mandatory;
+子元素
+固定宽度
+scroll-snap-align: start;
+

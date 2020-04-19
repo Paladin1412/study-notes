@@ -204,6 +204,21 @@ class Test {
 
 registerPaint('background-canvas', Test);
 
-
+js中的写法
 CSS.px(42);  === 42px;
+
+let pos = new CSSPositionValue(
+    new CSSUnitValue(5, 'px'),
+    new CSSUnitValue(4, 'px')
+);
+
+更少的bug，例如数字值总是以数字形式返回，而不是字符串。
+el.style.opacity += 0.1, el.style === '0.30.1' // dragons!
+算数运算和单位转换， 在绝对长度单位，例如 px-cm之间进行转换并进行进本的数学运算。
+数值阀内限制和舍入，typed OM通过对值进行范围限制和舍入，以使其在属性的可接受范围内。
+更好的性能，浏览器必须做更少的工作序列化和反序列化字符串值，现在对于CSS值，引擎可以对JS和C++使用相似的理解，Tab Akis已经展示了一些早起的性能基准测试，与使用旧的CSSOM和字符串相比，typed om的运行速度快了大约30%，这对使用requestionAnimationFrame处理快速css动画可能很重要。
+crbug.com/808933可以跟踪Blink的更多性能演示。
+错误处理，新的解析方法带来了css世界中的错误处理。
+不需要猜测名字是驼峰还是字符串，typed OM中的css属性名称始终是字符串，与实际在css中编写的内容一致。
+
 
