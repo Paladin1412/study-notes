@@ -65,3 +65,16 @@ scroll-snap-align: x mandatory;
 固定宽度
 scroll-snap-align: start;
 
+12. 画图形
+shape-outsize: polygon(0, 0, 25%, 0, 57%);
+
+响应式布局核心知识
+fr单位
+repeat() 函数
+minimax() 函数
+auto-fill/auto-fit
+grid-auto-flow
+max-content/min-content
+
+MDN官方文档
+
