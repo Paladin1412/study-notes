@@ -1,0 +1,91 @@
+yum install docker;
+
+// 启动
+systemctel start docker
+// 状态
+systemctel status docker
+
+需要启动了docker才能使用docker命令
+docker
+
+docker-hub存在很多环境
+
+hub.docker.com
+
+### 初始化一个NodeJs程序
+创建一个空文件夹, 新建如下文件
+server.js
+package.json
+Dockerfile // docker打包的说明
+.dockerignore // docker过滤的恩建
+
+```server.js
+const Koa = require('koa');
+const app = new Koa();
+
+app.use(async ctx => {
+    ctx.body = 'Hello docker';
+})
+
+app.listen(3000);
+```
+
+```package.json
+{
+    "name": "docker_demo",
+    "version": "1.0.0",
+    "private": true,
+    "script": {
+        "start": "node server.js"
+    },
+    "dependencies": {
+        "koa": "2.5.0"
+    }
+}
+
+```
+
+.dockerignore
+
+logs
+*.log
+node_modules
+.node_modules
+.vscode
+
+```Dockerfile
+# 指定node镜像版本
+FROM node:8.9-alpine
+# 声明作者
+MAINTAINER yindong
+# 移动当前目录下面的文件到app目录下
+ADD . /app/
+# 进入到app目录下面，类似cd
+WORKDIR /app
+# 安装依赖
+RUN npm install
+# 对外暴露端口
+EXPOSE 3000
+# 程序启动脚本
+CMD ["npm", "start"]
+```
+
+构建镜像，使用build命令，注意后面不能少了那个.
+docker build -t docker_demo .
+
+查看镜像
+docker images
+
+启动镜像
+docker run -d -p 9000:3000 docker_demo
+
+第一次启动用run，后面用start
+-d 表示后台执行
+-p 表示端口映射
+
+查看容器
+docker ps
+
+
+
+
