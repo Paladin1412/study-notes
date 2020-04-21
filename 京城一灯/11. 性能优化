@@ -12,6 +12,9 @@ html css hint 善用css
 文件MD5，善用缓存。
 keep-alive http2
 雅虎军规
+离线缓存，localStroge sessionStorge；
+
+资源单独域名存储，是为了cookie不携带。否则页面数据太多。
 
 ## 渲染中的性能优化
 ## 页面加载的性能优化
