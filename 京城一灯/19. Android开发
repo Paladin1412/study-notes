@@ -1,0 +1,78 @@
+安卓是基于Linux内核的开放源代码移动操作系统，主要设计用于触屏移动设备如智能手机和平板电脑
+
+android碎片化问题
+- 源代码可自由修改
+- 众多设备繁杂
+- 系统版本各异
+- 分辨率不一致
+
+android分支
+android wear
+针对手表
+android tv
+针对电视
+android auto
+针对汽车
+
+### 下载android studio
+
+https://developer.android.google.cn/studio/
+
+### 设置
+
+欢迎页面
+
+- start a new android studio project
+- open an existing android studio project
+- check out project from version control
+- import project(Eclipse ADT, Gradle, etc)
+- import an android code sample
+
+右下角有配置
+
+SDK manager
+plugins
+check for update
+
+选择第一项，start a new android
+添加名字(不要用中文)
+添加包名 madaozhijian.com
+c++支持默认不勾选
+选择创建目录
+
+点击下一步
+
+选择所要适配的版本
+
+默认选中phon and tablet
+SDK 选中 android最低适配版本，比如14:4.0
+
+点击下一步
+
+选择展示的默认页面
+初学者选择Empty Activity
+
+下一步
+
+填写入口函数名字
+MainActivity
+Layout，随便填写。
+
+完成，即可！
+
+### 模块
+file -> new - new module
+
+选择位置可以切换模块。
+
+### 配置
+
+1. 工具栏 最后第三个，(Project Structure), 点击
+
+SDK路径选择，选择SDK路径和JDK路径，不需要勾选。
+app -> signing(签名, 不需要填写)-> flavors(切换sdk版本，不需要修改)
+
+### 发布apk
+
+build -> generate signed Apk -> 选择module(app) -> create new 签名文件(选择位置，填写名字，添加密码，alias：秘钥名称，密码，有效时间25年) 下一步 -> 选择输出路径，build类型，debug还是release -> 完成
+
