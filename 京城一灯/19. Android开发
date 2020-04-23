@@ -76,3 +76,12 @@ app -> signing(签名, 不需要填写)-> flavors(切换sdk版本，不需要修
 
 build -> generate signed Apk -> 选择module(app) -> create new 签名文件(选择位置，填写名字，添加密码，alias：秘钥名称，密码，有效时间25年) 下一步 -> 选择输出路径，build类型，debug还是release -> 完成
 
+### 使用IOS模拟器
+
+页面左上角切换模拟器
+
+herdWare：控制翻转。
+
+### 在真机上运行应用
+需要购买苹果的开发者证书
+ios dev center
