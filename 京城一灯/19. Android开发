@@ -83,5 +83,120 @@ build -> generate signed Apk -> 选择module(app) -> create new 签名文件(选
 herdWare：控制翻转。
 
 ### 在真机上运行应用
+
 需要购买苹果的开发者证书
+
 ios dev center
+
+链接手机
+
+设备目标上出现真机，选中。
+
+手机操作系统版本和开发版本目标一致，或者比真机低。
+
+点击左侧三角符号，添加id，输入密码
+id必须为购买了开发者证书的id
+
+window -> origin - 设备 -> 截图之类。
+
+### 发布appstore
+归档
+product -> archive
+选中iso点击distribute(发行),
+苹果一般审核一周，审核通过就可以上线啦。
+
+### RN开发环境搭建
+
+环境依赖：OSX， Xcode，Node
+OSX系统，以前不支持安卓系统，所以只能用OSX开发，现在已经支持了。和android studio一样
+Xcode，在App Store下载最新版本的Xcode
+
+依赖文件
+- node
+- watchman
+npm install watchman -g
+监听文件变化
+- flow
+npm install flow -g
+检测jsx语法
+- react-navtie-cli
+
+使用方式
+```
+npm install watchman -g
+
+npm install flow -g
+
+npm install react-native-cli -g
+
+react-native init ydapp
+
+react-native run-ios/open ydtest.xcodeproj 启动ios模拟器
+
+// react-native run-android
+```
+
+模拟器需要在xcode里面配置
+
+### 开发
+
+方式一：
+进入到ios文件夹
+open myapp.xcodeproj 启动ide
+
+方式二：
+直接开发
+
+安卓问题，设置模拟器-菜单栏倒数第三个
+
+参考官网
+
+### Cordova
+
+一个移动开发框架.
+将HTML,CSS,JS封装成原生APP(Hybrid);
+来自Adobe的PhoneGap产品
+是Apache的顶级开源项目
+
+优点
+跨平台，利于移植
+能利用HTML5的各种特效
+开发快速，成本低
+
+缺点
+不能使用设备的所有特性
+执行速度慢
+不像原生应用，与系统不协调
+一次编写，处处调试
+
+安装：
+1. 安装node
+2. 安装
+npm install -g cordova
+3. 安装java jdk
+
+
+4. 安装android SDK
+
+注意环境变量检查。
+
+使用：
+```
+
+sudo cordova create hello com.example.hello
+
+cd hello
+
+sudo cordova platform add android
+
+sudo cordova build
+
+sudo cordova run
+```
+
+项目目录
+config.xml 核心配置信息
+hook: 自定义扩展功能
+platform: 添加的运行时，例如andriod ios等
+plugins: 引入的插件
+www: 开发目录

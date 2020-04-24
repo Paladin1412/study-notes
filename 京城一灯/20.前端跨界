@@ -1,0 +1,35 @@
+### PC桌面应用
+
+sudo npm install nw -g
+
+也可以官网下载，然后配置环境变量使用如下命令启动
+
+```nw . ``` 或者 ```nw 文件夹名称```
+
+### 打包 mac平台
+
+如果使用node安装
+
+1. 将内核copy出来
+cp -R /usr/local/lib/node_modules/nw/nwjs/nwjs.app ./hello-nw.app
+其实就是下载的那个可执行文件。
+
+2. 将package，html 等资源所在的文件夹 压缩成zip，修改后缀名为nw
+
+3. 将内核和打包的资源合并
+zip -r ../hello-nw.app/Contents/Resources/app.nw *
+
+4. 下载icns更新icon
+Contents/Resources 中替换nw.icon
+
+5. 可以在html中直接执行node模块。
+
+### windows平台
+1. 将package，html 等资源所在的文件夹 压缩成zip，修改后缀名为app.nw
+2. 将nw.exe 和 app.nw合并成一个文件夹
+copy /b nw.exe+app.nw app.exe
+3. 下载Enigma Virtual Box 将文件打包
+4. 利用zip更换icon
+程序-> 添加到压缩文件 -> zip, 存储（方式）,创建自解压 -> 高级 -> 自解压选项 ->
+设置 -> 提取后运行(添加文件名.exe) -> 模式(解压到临时文件夹, 全部隐藏) ->
+更新(覆盖所有文件) -> 文本和图标(从文件加载自解压文件图标) -> 确定。完成
