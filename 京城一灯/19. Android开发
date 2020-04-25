@@ -347,5 +347,35 @@ board.on('ready', function() {
 })
 ```
 
+NodeBot
+
+js + 螺丝 = 机器人
+
+使用谷歌查询
+
 - ruff初体验
+
+Ruff是一个JavaScript运行时环境，专为硬件开发而设计。它对硬件进行了抽象，使用了基于事件驱动、异步I/O的模型，使硬件开发变得轻量而且高效。除了使用JavaScript作为开发语言，它还拥有自己的软件仓库，从模块到驱动一应俱全。提高软件兼容性、降低硬件开发门槛。
+
+下载SDK,升级固件rap。
+export RUFF_HOME = /path/to/ruff-sdk
+export PATH = "$PATH:$RUFF_HOME/bin"
+rap system upgrade --hostname 192.168.1.30 ~/Downloads/ruffos-080.bin
+
+- 创建项目 
+cd hello-ruff 
+rap init 链接设备 
+rap wifi
+- jq一样的体验
+$('#led-r').turnOn();
+- rap deploy -s rap stop
+- rap device add 硬件id 同时可以通过rap log监听输出日志。
+新增元件要执行添加命令
+
+ruff.io
+
+### JS开发VR
+使用Nodejs来读取Oculus(设备)上的传感器数据，将这些数据用websocket协议来提供一个服务
+寻找一个3D游戏引擎，如Three.js来创建一个3D世界。
+读取传感器的值将其表示在3D世界中。
 
