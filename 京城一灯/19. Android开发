@@ -151,12 +151,101 @@ open myapp.xcodeproj 启动ide
 
 参考官网
 
+#### 开发依赖的一些框架
+react-native-navigator-router：切换路由，性能比自带的好
+react-native-elements
+react-native-vector-icons
+react-native-router-flux：切换路由，性能比自带的好
+react-native-animatable
+react-native-ignite
+react-native-wechat
+react-native-sound
+react-native-gifted-messenger
+react-native-image-picker
+react-native-yunpeng-alipay
+
+常用的性能优化的点
+1. 异步逐层渲染，使用requestAnimationFrame或Timeout定时将单个组件push进ScrollView容器，react-progressive
+2. shouldComponentUpdate
+3. 直接修改State使用requestAnimationFrame(fn), 使用setNativeProps方法可以理解为web的直接修改dom，性能分析工具React.addons.Perf
+4. 区分动态组件和静态组件，最小化结构
+5. 最小化ListView 子选项不可见的时候减小list（react-native-sglistview, CRNlistView）
+
+
+Native优缺点
+优点:
+用户体验极佳
+接口完备
+什么都可以做
+
+H5的优缺点
+优点:
+代码跨平台
+开发效率高
+发版灵活
+
+缺点:
+用户体验不如原生
+优化成本较高
+
+缺点
+不能跨平台，一套逻辑，两套代码
+开发/测试成本高
+Coding -> 编译 -> 打包 -> 测试 -> Coding
+开发效率一般
+版本发布不灵活，受应用市场限制，频繁发版影响用户体验
+
+混合式开发
+web的开发体验，Native的用户体验
+代码保存即生效，不用等待漫长的编译打包过程
+组件化复用率高
+版本发布灵活，使用增量升级流量超小，用户无感知
+
+不足:
+web需要单独开发，适用五web或弱web的项目
+用户体验扔没有达到原生效果，单线程js控制的动效有时会有轻微掉帧
+样式无选择器概念，写起来较为臃肿
+
+更新(增量算法) bundle
+1. 计算增量包
+新版本10 - 旧版本 1 -9 = 增量包
+会有九个包
+2. app根据自己的当前版本下载对应的增量包
+3. app种通过 旧版本 + 增量包 = 新版本，计算出新版本的全量包
+
+ReactNative 发布 bundle
+1. react-native bundle --entry-file demo/index.js --bundle-output ./ios/bundle/index.ios.jsbundle --platform ios --asset-dest ./ios/bundle --dev false
+2. jsCodeLocation = [[NSBundle mainBundle]
+URLForResource:@"index.ios"
+withExtension:@"jsbundle"];
+
+上线
+- 原生代码部分，oc或者java代码
+- jsbundle文件
+- 图片资源
+
+完整上线
+- google-diff-match-patch 不过个别时候会造成安卓内存爆满，不推荐使用
+- bsdiff 生成差异
+- bspath 合并差异
+
+app升级流程
+app检验是否有升级，下载增量包，校验MD5，解压，升级，校验新的md5，完成升级, 下次打开使用。
+
+微软提供下面的库提供热更新
+react-native-code-push
+携程开发的帮助拆分bundle
+moles-packer
+
 ### Cordova
 
 一个移动开发框架.
 将HTML,CSS,JS封装成原生APP(Hybrid);
 来自Adobe的PhoneGap产品
 是Apache的顶级开源项目
+组件化，复用率高
+测试效率高，业务逻辑一套代码
+跨平台，代码一致性95%以上
 
 优点
 跨平台，利于移植
@@ -200,3 +289,63 @@ hook: 自定义扩展功能
 platform: 添加的运行时，例如andriod ios等
 plugins: 引入的插件
 www: 开发目录
+
+### js跨硬件和PC
+
+Arduino是一款便捷灵活、方便上手的开源电子原型平台。包含硬件（各种型号的Arduino板）和软件（ArduinoIDE)。由一个欧洲开发团队于2005年冬季开发。其成员包括Massimo Banzi、David Cuartielles、Tom Igoe、Gianluca Martino、David Mellis和Nicholas Zambetti等。
+
+它构建于开放原始码simple I/O介面版，并且具有使用类似Java、C语言的Processing/Wiring开发环境。主要包含两个的部分：硬件部分是可以用来做电路连接的Arduino电路板；另外一个则是Arduino IDE，你的计算机中的程序开发环境。你只要在IDE中编写程序代码，将程序上传到Arduino电路板后，程序便会告诉Arduino电路板要做些什么了。
+
+Arduino能通过各种各样的传感器来感知环境，通过控制灯光、马达和其他的装置来反馈、影响环境。板子上的微控制器可以通过Arduino的编程语言来编写程序，编译成二进制文件，烧录进微控制器。对Arduino的编程是通过 Arduino编程语言 (基于 Wiring)和Arduino开发环境(基于 Processing)来实现的。基于Arduino的项目，可以只包含Arduino，也可以包含Arduino和其他一些在PC上运行的软件，他们之间进行通信 (比如 Flash, Processing, MaxMSP)来实现。
+
+- node的串行端口
+串行接口是指数据一位一位的顺序传送，其特点是通信线路简单，只要一对传输线就可以实现双向通信
+选择正确的电路板
+serialport Node串行端口
+
+```
+const SerialPort = require('serialport');
+const port = new SerialPort('/dev/tty-usbserial1');
+
+port.on('open', () => {
+    port.write('main screen turn on', function(err) {
+        if (err) {
+            return console.log('Error on write' + err.message);
+        }
+        console.log('message written');
+    })
+})
+```
+
+- firmata协议
+Firmata是一个PC与MCU通讯的一个常用协议。其遵旨是能与任何主机PC软件包兼容。到目前为止，已经得到不少语言的支持，这样可方便地将对协议的支持加入软件系统中。Firmata起初是针对于PC与Arduino通讯的固件(Firmware)，其目标是让开发者可以通过PC软件完全地控件Arduino。
+
+链接电路板，找到对应的串行端口，安装 Firmata 固件。
+
+npm install firmata
+
+```
+const Board = require('firmata');
+const board = new Board('path to serialport');
+
+board.on('ready', () => {
+
+})
+```
+
+上面太麻烦，可以用Johnny-Five
+Johnny-Five
+
+npm install johnny-five;
+
+```
+var five = require('johnny-five');
+var board = new five.Board();
+board.on('ready', function() {
+    var led = new five.Led(13); 亮13秒
+    led.blink(500); // 闪500下
+})
+```
+
+- ruff初体验
+
