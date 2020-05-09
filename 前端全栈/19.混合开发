@@ -229,7 +229,7 @@ APICloud可以和vue或react配着用吗，只用他的js-sdk这块调系统调�
 const rs = fs.createReadStream('1.avi');
 sock.on('video_stream_req', () {
   rs.on('data', (data) => {
-    sock.emait('data', data)
+    sock.emit('data', data)
   })
 })
 ```
