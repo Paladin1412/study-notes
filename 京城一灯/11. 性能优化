@@ -14,7 +14,21 @@ keep-alive http2
 雅虎军规
 离线缓存，localStroge sessionStorge；
 
+多个cdn
 资源单独域名存储，是为了cookie不携带。否则页面数据太多。
+
+expires 和 cache-control 一般关闭，只配置一个etag
+一般expires 和 cache-control用在公用库上。业务代码一般不开启。业务代码使用Etag就可以了。
+
+缓存优先级
+
+cache-control
+
+expires
+
+etag
+
+last-modified, 请求头，if-modifed-since
 
 ## 渲染中的性能优化
 ## 页面加载的性能优化
