@@ -28,7 +28,7 @@ expires
 
 etag
 
-last-modified, 请求头，if-modifed-since
+last-modified, 请求头，if-modifed-since, 
 
 ## 渲染中的性能优化
 ## 页面加载的性能优化
