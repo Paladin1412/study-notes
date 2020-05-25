@@ -51,10 +51,46 @@ last-modified, 请求头，if-modifed-since,
 gpu直接参与
 css3d, video, webgl, transform, 滤镜  统称为硬件加速
 
-
+重排一定重绘，重绘不一定会重排。
 
 
 ## 页面加载的性能优化
+
+必须知道的概念
+
+TTFB: 第一次加载网页，返回第一个字节的时间, 用户接收到第一个字节，不是服务器(不要看baidu，baidu给的不对)
+
+Time to Frist Byte
+
+FP: 首次绘制时间
+
+First Paint
+
+FCP: 首次内容绘制时间
+
+First Meaningful Paint
+
+First Contentful Paint
+
+FMP: 首次有意义的绘制
+
+Isomorphic Javascript: 同构化
+
+SSR&CSR: 服务端渲染，客户端渲染
+
+Long tasks: 超过了50ms的任务
+
+TTI: 可交互时间
+
+Time to interactive
+
+index.html -> bigpipe -> a 标签。
+
+SSR + CSR 合二为一。
+
+### 性能指标获取
+
+
 ## NodeJS性能优化
 
 
