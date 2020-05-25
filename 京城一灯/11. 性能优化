@@ -30,7 +30,32 @@ etag
 
 last-modified, 请求头，if-modifed-since, 
 
+可将js文件放入离线缓存，localStroge 中，通过eval执行。一般针对库。或者配合hash至使用。
+
 ## 渲染中的性能优化
+
+1. 重绘和重排 网页整体渲染过程
+1.1 获取dom分隔层
+1.2 根据每层节点结算样式结果Recalculate Style
+1.3 为每个节点生成图形和位置 Layout
+1.4 将每个节点绘制成到当前的图层位图中 Paint
+1.5 将图层上传到gpu gpu bitmap 专门处理图像
+1.6 根据符合要求的多个图层合并生成图像，Composite Layers 效果呈现
+
+总结渲染阶段: Layout -》 Paint -》 Composie Layers
+
+什么情况下分层
+
+跟元素，position，transfrom，半透明，滤镜，canvas，video，overflow
+
+gpu直接参与
+css3d, video, webgl, transform, 滤镜  统称为硬件加速
+
+
+
+
 ## 页面加载的性能优化
 ## NodeJS性能优化
+
+
 
