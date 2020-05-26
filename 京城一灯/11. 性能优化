@@ -86,7 +86,33 @@ Time to interactive
 
 index.html -> bigpipe -> a 标签。
 
+bigpipe：分段吐露。
+
 SSR + CSR 合二为一。
+
+
+谷歌浏览器控制台性能监控
+
+- Rendering:
+
+Paint flashing 够选后可以看到重绘。绿色就是重绘。重绘的地方会绿。
+FPS meter: 帧率, 一秒绘制多少帧。
+
+- Performance
+刷新会重新录制
+1. Loading 加载时间
+2. Scripting 脚本执行时间
+3. Rendering 重排时间
+4. Painting 重绘时间
+5. System 系统时间
+6. 空闲时间
+
+- Event log
+任务，每一次执行的过程。
+- Bottom-up
+做了哪些事，
+任务，合成层，重排，重绘，DOM GC
+
 
 ### 性能指标获取
 
