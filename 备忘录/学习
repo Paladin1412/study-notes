@@ -1,0 +1,70 @@
+你就花1个月时间逼自己，每天看一篇文章，写一段文字总结，然后带链接，分享到群里，以你的悟性，1个月时间足以试试阿里P6
+
+渠道：segmentfault, github, 掘金, 知乎的前端专栏
+
+学习一下最新的 React 的 PropType 的校验
+https://reactjs.org/docs/static-type-checking.html
+回头在组内做次分享
+
+基础：
+* JavaScript
+    * 原型链
+    * 基本数据类型
+    * ES6，7，8各特性极其用法和意义
+    * Node.js 相关引申（包括关系数据库、非关系数据库）
+* CSS
+    * BFC
+    * Reflow 和 Repaint
+    * 新CSS特性
+* HTML
+    * 常用head标签的意义
+    * 语义化
+框架：
+* React
+    * fiber
+    * 虚拟Dom是什么
+    * Dom Diff 算法是什么
+    * 如何与 TypeScript
+    * React-router
+    * Provider 模式
+* Vue
+* Angular
+* jQuery
+    * 插件如何定义，原理是什么
+    * jQuery工程和 React 工程的差异是什么，各优劣是什么
+工具：
+* Webpack
+* Babel
+* Yarn
+* Flow
+* TypeScript ( Native Script )
+* Rx.js
+* Immutable.js
+* Logger
+* 单元测试（BDD，TDD）
+工程：
+* React 工程包含哪些主体
+* Vue 工程包含哪些主体
+* Angular 工程包含哪些主题
+* 上面三者之间各有什么异同
+架构：
+* 如何从0搭建一个前端工程，技术选型怎么做，需要哪些组成部分？（路由、缓存、数据层…）
+* ECMAScript 最新规范概述，Stage0,1,2,3,4 各代表什么意思
+扩散：
+* 采购
+    * 业务理解：采购当前的痛点是什么，如何解决，你在采购贡献了哪些中台价值
+    * 业务架构：如果让你重新设计采购业务架构，你会如何设计
+
+
+
+
+    * 		title（资深前端工程师）、职责说明（技术栈、带新人、统筹业务和日常需求）、期望薪资（25K以上）     
+    *   
+    * 		面试题提前看起来：
+    * 		https://github.com/yangshun/front-end-interview-handbook
+    * 		https://www.codementor.io/blog/5-essential-reactjs-interview-questions-du1084ym1
+    * 		https://github.com/h5bp/Front-end-Developer-Interview-Questions
+    * 		http://www.thatjsdude.com/interview/js2.html 
+
+基础OK
+泛概念（Web安全，性能、HTTP、工程化）、新技术（PWA、Fiber）、知识面不OK

@@ -1,0 +1,5 @@
+工作
+registry http://npm-reg.devops.ichoice.cc
+
+npm set registry http://npm-reg.devops.ichoice.cc
+npm adduser --registry http://npm-reg.devops.ichoice.cc
